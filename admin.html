@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Glitch Raid Projector - Avatar Boot Sequence</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        body {
+            background-color: #03040b;
+            padding: 0;
+            margin: 0;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            position: relative;
+            font-family: var(--font-body);
+        }
+
+        /* 3D Full Screen WebGL Viewport */
+        #canvas-3d-viewport {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Floating Cyber HUD Panel Overlays */
+        .hud-overlay {
+            position: absolute;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .hud-interactive {
+            pointer-events: auto;
+        }
+
+        /* Top HUD Boss HP Bar */
+        .top-hud-bar {
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 48px);
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            align-items: center;
+            padding: 16px 28px;
+            border-radius: 16px;
+            border-color: rgba(239, 68, 68, 0.25);
+            background: rgba(13, 7, 10, 0.7);
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.1);
+        }
+
+        .projector-title-deck h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+            text-transform: uppercase;
+            letter-spacing: -0.5px;
+            margin-bottom: 2px;
+        }
+
+        /* Boss Battle HP Bar design */
+        .boss-hp-deck {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .boss-hp-outer {
+            flex-grow: 1;
+            height: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .boss-hp-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, #7f1d1d, #ef4444, #f87171);
+            border-radius: 6px;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .boss-hp-text {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            min-width: 70px;
+            text-align: right;
+        }
+
+        /* Left Floating Status list overlay */
+        .left-status-panel {
+            left: 24px;
+            top: 120px;
+            bottom: 24px;
+            width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Right Floating Live Feed & Controller Deck */
+        .right-feed-panel {
+            right: 24px;
+            top: 120px;
+            bottom: 24px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .live-ticker {
+            flex-grow: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .ticker-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .ticker-item {
+            padding: 12px 16px;
+            border-left: 3px solid var(--neon-purple);
+            background: rgba(13, 17, 39, 0.6);
+            border-radius: 0 8px 8px 0;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .ticker-time {
+            font-family: var(--font-code);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .ticker-msg {
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        /* Cohort summary list cards */
+        .cohort-status-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px;
+            min-height: 0;
+        }
+
+        .student-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.85rem;
+        }
+
+        .student-row .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        /* Grand finale celebration card */
+        .celebration-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(3, 4, 11, 0.98);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: zoomFade 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+        }
+
+        @keyframes zoomFade {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .congratulations-banner {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--neon-cyan), var(--neon-pink), var(--neon-purple), var(--neon-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: -2px;
+            animation: textFlow 6s infinite linear;
+        }
+
+        @keyframes textFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 400% 50%; }
+        }
+
+        /* Dynamic HTML Screen Vibrations / Shaking */
+        .html-shake {
+            animation: htmlShake 0.15s infinite;
+        }
+
+        @keyframes htmlShake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(0px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(2px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 1. Full Bleed WebGL 3D Canvas -->
+    <div id="canvas-3d-viewport"></div>
+
+    <!-- 2. Floating Top HUD: Boss Health Bar -->
+    <header class="hud-overlay top-hud-bar glass-panel hud-interactive">
+        <div class="projector-title-deck">
+            <h1>👾 GLITCH OVERLORD</h1>
+            <p style="color:var(--text-secondary); font-size:0.75rem;">COOPERATIVE COHORT RAID</p>
+        </div>
+
+        <div class="boss-hp-deck">
+            <div class="boss-hp-outer">
+                <div id="boss-hp-fill" class="boss-hp-fill" style="width: 100%;"></div>
+            </div>
+            <div id="boss-hp-txt" class="boss-hp-text">100%</div>
+        </div>
+    </header>
+
+    <!-- 3. Left Status Panel Overlay -->
+    <section class="hud-overlay left-status-panel hud-interactive">
+        <div class="glass-panel" style="flex-grow: 1; display:flex; flex-direction:column; padding:20px; min-height: 0;">
+            <h3 class="text-neon-cyan" style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px; margin-bottom:12px;">Active Raiders</h3>
+            <div class="cohort-status-list" id="cohort-status-list">
+                <!-- Dynamically populated rows -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Right Feed Panel Overlay -->
+    <section class="hud-overlay right-feed-panel hud-interactive">
+        <!-- Achievements Live Stream Ticker -->
+        <div class="glass-panel live-ticker">
+            <h3 class="text-neon-purple" style="font-size:0.9rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px; margin-bottom:12px;">Raid Logs</h3>
+            <div class="ticker-list" id="ticker-feed">
+                <div class="ticker-item" style="border-color:var(--neon-green)">
+                    <div class="ticker-time">RAID INITIALIZED</div>
+                    <div class="ticker-msg">Glitch Overlord Core locked. Push code missions to launch laser counterattacks!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Host simulation control deck (for direct testing/workshop driving) -->
+        <div class="glass-panel" style="padding: 20px;">
+            <h3 class="text-neon-pink" style="font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:8px; margin-bottom:12px;">Raid Controller</h3>
+            <div class="control-btn-grid" style="display:grid; grid-template-columns: 1fr; gap: 8px;">
+                <button class="btn-cyber" onclick="simulateParticipant()" style="padding:10px; font-size:0.8rem; background:linear-gradient(135deg, var(--neon-cyan), #0891b2);">Add Raider Node</button>
+                <button class="btn-cyber" onclick="simulateQuestSubmit()" style="padding:10px; font-size:0.8rem; background:linear-gradient(135deg, var(--neon-purple), #6d28d9);">Fire Capsule Laser</button>
+                <button class="btn-cyber" onclick="resetState()" style="padding:10px; font-size:0.8rem; background:transparent; border:1px solid rgba(239, 68, 68, 0.4); color:#ef4444; box-shadow:none;">Purge & Restore Core</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Collaborative 100% Celebration Screen Overlay -->
+    <div id="celebration-overlay" class="celebration-overlay" style="display:none;">
+        <div style="z-index:10; padding:20px;">
+            <div style="font-size:1.3rem; text-transform:uppercase; letter-spacing:0.2em; color:var(--neon-green); margin-bottom:12px;">SYSTEM DEGLITCHED</div>
+            <h1 class="congratulations-banner">Overlord Defeated!</h1>
+            <p style="color:var(--text-secondary); font-size:1rem; max-width:600px; margin:0 auto 40px; line-height:1.5;">The cohort successfully targeted the Glitch Overlord, firing all sync lasers. Avatar assembly core is permanently stabilized!</p>
+            <button class="btn-cyber" onclick="closeCelebration()" style="padding:14px 28px; font-size:1rem;">RETURN TO CHAMBERS AREA</button>
+        </div>
+    </div>
+
+    <!-- White-out Flash Effect Overlay -->
+    <div id="flash-effect-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:white; opacity:0; pointer-events:none; z-index:99999; transition: opacity 0.1s ease-out;"></div>
+
+    <!-- Load CDN Libraries (Three.js) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/assembly-renderer.js"></script>
+    <script>
+        let lastReportedStateString = "";
+        let threeRenderer = null;
+
+        window.addEventListener('load', () => {
+            // Initialize 3D Engine
+            threeRenderer = new Assembly3DRenderer('canvas-3d-viewport');
+
+            // Render HUD metrics
+            syncChambersData();
+
+            // Setup real-time listeners for storage changes
+            window.addEventListener('storage', (e) => {
+                if (e.key === STORAGE_KEY) {
+                    syncChambersData();
+                }
+            });
+
+            // Local browser context state listener
+            window.addEventListener('workshopStateChanged', syncChambersData);
+        });
+
+        function syncChambersData() {
+            const state = WorkshopState.get();
+            
+            // Check if state has actually updated to prevent redundant loops
+            const currentStateString = JSON.stringify(state.participants);
+            if (currentStateString === lastReportedStateString) return;
+
+            // Generate state delta logs for achievement ticker stream
+            if (lastReportedStateString) {
+                const oldParts = JSON.parse(lastReportedStateString);
+                detectAndLogAchievements(oldParts, state.participants);
+            }
+            
+            lastReportedStateString = currentStateString;
+            const participants = state.participants;
+
+            // Precompute total level points and boss health up front
+            let totalLevelPoints = 0;
+            let maxAvailablePoints = participants.length * 5;
+            let activeLevel5Count = 0;
+            participants.forEach(p => {
+                totalLevelPoints += p.currentQuest;
+                if (p.currentQuest === 5) activeLevel5Count++;
+            });
+            let bossHp = 100;
+            if (maxAvailablePoints > 0) {
+                bossHp = 100 - Math.round((totalLevelPoints / maxAvailablePoints) * 100);
+            }
+
+            // 1. Update Three.js 3D WebGL Scene!
+            if (threeRenderer) {
+                threeRenderer.updateCohort(participants, bossHp);
+            }
+
+            // 2. Render Left HUD Rows list
+            const rowsContainer = document.getElementById('cohort-status-list');
+            rowsContainer.innerHTML = '';
+
+            const questColors = [
+                '#4b5563', // 0: offline
+                '#ec4899', // 1: git (pink)
+                '#8b5cf6', // 2: portfolio (violet)
+                '#06b6d4', // 3: 3d (cyan)
+                '#3b82f6', // 4: avatar (blue)
+                '#10b981'  // 5: bot (green)
+            ];
+
+            participants.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'student-row';
+                row.innerHTML = `
+                    <span style="display:flex; flex-direction:column; max-width:130px;">
+                        <span style="font-weight:600; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${p.displayName}</span>
+                        <span style="font-family:var(--font-code); font-size:0.7rem; color:var(--text-secondary); margin-top:2px;">Bot: ${p.botName || 'No-Bot'}</span>
+                    </span>
+                    <span style="display:flex; align-items:center; font-family:var(--font-code); font-size:0.75rem;">
+                        <span class="status-dot" style="background:${questColors[p.currentQuest] || '#4b5563'}; box-shadow: 0 0 8px ${questColors[p.currentQuest]}"></span>
+                        Tier ${p.currentQuest}/5
+                    </span>
+                `;
+                rowsContainer.appendChild(row);
+            });
+
+            // Render HUD HP bar
+            document.getElementById('boss-hp-txt').innerText = `${bossHp}%`;
+            document.getElementById('boss-hp-fill').style.width = `${bossHp}%`;
+
+            // Trigger Victory celebration overlay if boss HP hits 0%
+            if (participants.length >= 1 && bossHp === 0) {
+                triggerVictoryCelebration();
+            }
+        }
+
+        // Ticker logs achievements stream
+        function detectAndLogAchievements(oldParts, newParts) {
+            newParts.forEach(newP => {
+                const oldP = oldParts.find(x => x.username === newP.username);
+                if (!oldP) {
+                    addLog('RAIDER ACTIVE', `Capsule **${newP.displayName}** aligned. Influx lock engaged!`, 'var(--neon-cyan)');
+                } else if (newP.currentQuest > oldP.currentQuest) {
+                    const quest = QUESTS.find(q => q.id === newP.currentQuest);
+                    const actions = [
+                        '',
+                        'synced Git mainframe cables. Plasma battery loaded!',
+                        'materialized glass chassis armor. Cannon calibrated!',
+                        'focused 3D WebGL vectors. Hologram rays locking target!',
+                        'anchored avatar core nodes. Overcharge lasers active!',
+                        'ignited AI smalltalk chatbot brain. Consciousness blast fired!'
+                    ];
+                    const colors = ['', 'var(--neon-pink)', 'var(--neon-purple)', 'var(--neon-cyan)', 'var(--neon-cyan)', 'var(--neon-green)'];
+                    addLog(`COUNTERATTACK`, `**${newP.displayName}** ${actions[newP.currentQuest]} DMG dealt! (+${quest.xp} XP)`, colors[newP.currentQuest]);
+                }
+            });
+        }
+
+        function addLog(tag, msg, color) {
+            const feed = document.getElementById('ticker-feed');
+            const now = new Date();
+            const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            const item = document.createElement('div');
+            item.className = 'ticker-item';
+            item.style.borderColor = color || 'var(--neon-purple)';
+            item.innerHTML = `
+                <div class="ticker-time" style="color:${color || 'var(--neon-purple)'}">${tag} - ${timeStr}</div>
+                <div class="ticker-msg">${msg}</div>
+            `;
+            feed.insertBefore(item, feed.firstChild);
+        }
+
+        // Host Control simulations
+        function simulateParticipant() {
+            const names = ['Aarav', 'Meera', 'Rohan', 'Kriti', 'Aditya', 'Sneha'];
+            const nick = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 100);
+            WorkshopState.addParticipant(nick.toLowerCase(), nick);
+        }
+
+        function simulateQuestSubmit() {
+            const state = WorkshopState.get();
+            const underLevel5 = state.participants.filter(p => p.currentQuest < 5);
+            
+            if (underLevel5.length === 0) {
+                alert('The Glitch Overlord is already completely obliterated!');
+                return;
+            }
+
+            const randomP = underLevel5[Math.floor(Math.random() * underLevel5.length)];
+            const nextQuestId = randomP.currentQuest + 1;
+            
+            WorkshopState.submitQuest(
+                randomP.username,
+                nextQuestId,
+                `https://github.com/${randomP.username}/quest-${nextQuestId}-repo`,
+                ['Gemini', 'Claude', 'ChatGPT'][Math.floor(Math.random() * 3)],
+                `Simulated detailed prompts to initialize structures for Quest ${nextQuestId}.`
+            );
+        }
+
+        let victoryTriggered = false;
+
+        function resetState() {
+            if (confirm('Are you sure you want to restore the Glitch Overlord health core and purge submissions?')) {
+                victoryTriggered = false;
+                WorkshopState.reset();
+            }
+        }
+
+        // Play premium synthesized victory riser & explosion audio using Web Audio API
+        function playVictorySound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // 1. Cinematic riser
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(80, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 1.2);
+                
+                gain.gain.setValueAtTime(0.01, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 1.2);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 1.25);
+
+                // 2. Heavy Sub-Bass Explosion impact at t = 1.2s
+                setTimeout(() => {
+                    const subOsc = ctx.createOscillator();
+                    const subGain = ctx.createGain();
+                    subOsc.type = 'triangle';
+                    subOsc.frequency.setValueAtTime(140, ctx.currentTime);
+                    subOsc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 1.6);
+                    
+                    subGain.gain.setValueAtTime(0.5, ctx.currentTime);
+                    subGain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 1.6);
+                    
+                    subOsc.connect(subGain);
+                    subGain.connect(ctx.destination);
+                    
+                    subOsc.start();
+                    subOsc.stop(ctx.currentTime + 1.65);
+                    
+                    // Add noise explosion filter
+                    createNoiseBurst(ctx);
+                }, 1200);
+            } catch (e) {
+                console.warn("Web Audio API not allowed or initialized yet: ", e);
+            }
+        }
+
+        function createNoiseBurst(ctx) {
+            const bufferSize = ctx.sampleRate * 1.5;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = ctx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter = ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(800, ctx.currentTime);
+            filter.frequency.exponentialRampToValueAtTime(8, ctx.currentTime + 1.3);
+            
+            const noiseGain = ctx.createGain();
+            noiseGain.gain.setValueAtTime(0.4, ctx.currentTime);
+            noiseGain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 1.3);
+            
+            noise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(ctx.destination);
+            
+            noise.start();
+        }
+
+        // Final Victory Overlay controller with bright flash, physical shake, and sound
+        function triggerVictoryCelebration() {
+            if (victoryTriggered) return;
+            victoryTriggered = true;
+
+            // 1. Play cinematic synth sound sequence
+            playVictorySound();
+
+            // 2. Trigger high-intensity screen flash overlay
+            const flash = document.getElementById('flash-effect-overlay');
+            if (flash) {
+                flash.style.transition = 'none';
+                flash.style.opacity = '1.0';
+                // Force reflow
+                flash.offsetHeight;
+                flash.style.transition = 'opacity 2.2s cubic-bezier(0.25, 1, 0.5, 1)';
+                flash.style.opacity = '0.0';
+            }
+
+            // 3. Shake the HTML layout
+            document.body.classList.add('html-shake');
+            setTimeout(() => {
+                document.body.classList.remove('html-shake');
+            }, 2500);
+
+            // 4. Delay transition of the congratulations overlay card to allow the show to complete
+            setTimeout(() => {
+                document.getElementById('celebration-overlay').style.display = 'flex';
+            }, 2500);
+        }
+
+        function closeCelebration() {
+            document.getElementById('celebration-overlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

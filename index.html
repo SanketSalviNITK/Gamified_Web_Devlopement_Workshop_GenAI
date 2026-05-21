@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GenAI Web Dev Workshop Gateway</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .gateway-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .header-logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            animation: textPulse 4s infinite alternate;
+        }
+
+        @keyframes textPulse {
+            0% { filter: drop-shadow(0 0 5px rgba(6, 182, 212, 0.3)); }
+            100% { filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.6)); }
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin-bottom: 48px;
+            line-height: 1.6;
+        }
+
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 32px;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .portal-card {
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .portal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+
+        .portal-participant::before {
+            background: linear-gradient(to right, var(--neon-cyan), var(--neon-purple));
+        }
+
+        .portal-admin::before {
+            background: linear-gradient(to right, var(--neon-purple), var(--neon-pink));
+        }
+
+        .icon-box {
+            font-size: 3rem;
+            margin-bottom: 24px;
+        }
+
+        .portal-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .portal-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .badge-list {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .role-tag {
+            font-family: var(--font-code);
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 20px;
+            color: var(--neon-cyan);
+        }
+    </style>
+</head>
+<body>
+    <div class="gateway-container">
+        <h1 class="header-logo">Avatar Boot Sequence</h1>
+        <p class="subtitle">Welcome to the Gamified GenAI Web Development Workshop. Master GitHub, code stunning interfaces with AI companions, build a 3D Avatar, and ignite its conversational chatbot brain.</p>
+
+        <div class="portal-grid">
+            <!-- Participant Portal Card -->
+            <div class="portal-card glass-panel portal-participant" onclick="location.href='participant.html'">
+                <div class="icon-box">💻</div>
+                <h2 class="portal-title text-neon-cyan">Participant Deck</h2>
+                <p class="portal-desc">Initialize your cybernetic avatar profile, submit repository linkages, record your prompting history, and run the Smart AI Evaluator.</p>
+                <div class="badge-list">
+                    <span class="role-tag">STUDENT_DECK</span>
+                    <span class="role-tag" style="color:var(--neon-purple)">QUESTS_1_TO_5</span>
+                </div>
+            </div>
+
+            <!-- Admin Portal Card -->
+            <div class="portal-card glass-panel portal-admin" onclick="location.href='admin.html'">
+                <div class="icon-box">📡</div>
+                <h2 class="portal-title text-neon-pink">Admin Projector</h2>
+                <p class="portal-desc">Cast the Master Assembly Lab on the overhead projector. Monitor the cohort's capsules and progress in real time as they complete missions.</p>
+                <div class="badge-list">
+                    <span class="role-tag" style="color:var(--neon-pink)">HOST_SCREEN</span>
+                    <span class="role-tag" style="color:var(--neon-purple)">LIVE_SYNC</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

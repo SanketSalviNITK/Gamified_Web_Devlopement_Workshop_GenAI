@@ -1,0 +1,304 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&family=Fira+Code:wght@400;600&display=swap');
+
+:root {
+    --bg-color: #060813;
+    --card-bg: rgba(13, 17, 39, 0.45);
+    --card-border: rgba(99, 102, 241, 0.15);
+    --neon-purple: #8b5cf6;
+    --neon-cyan: #06b6d4;
+    --neon-pink: #ec4899;
+    --neon-green: #10b981;
+    --text-primary: #f3f4f6;
+    --text-secondary: #9ca3af;
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
+    --font-code: 'Fira Code', monospace;
+    --glow-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+}
+
+body {
+    background-color: var(--bg-color);
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.02em;
+}
+
+/* Glassmorphism Styles */
+.glass-panel {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel:hover {
+    border-color: rgba(99, 102, 241, 0.25);
+    box-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.3);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-purple);
+}
+
+/* Badges / Glow Utilities */
+.text-neon-cyan {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+.text-neon-purple {
+    color: var(--neon-purple);
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+}
+.text-neon-pink {
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px rgba(236, 72, 153, 0.4);
+}
+.text-neon-green {
+    color: var(--neon-green);
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.btn-cyber {
+    background: linear-gradient(135deg, var(--neon-purple), #6366f1);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.btn-cyber:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+}
+
+.btn-cyber::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+    transform: rotate(30deg);
+    transition: all 0.5s ease;
+}
+
+.btn-cyber:hover::after {
+    left: 120%;
+}
+
+/* Capsule Core Aesthetics */
+.capsule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    padding: 20px 0;
+}
+
+.capsule {
+    position: relative;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.capsule-glass {
+    width: 140px;
+    height: 200px;
+    border-radius: 70px 70px 15px 15px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    background: radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.08) 0%, rgba(0, 0, 0, 0.6) 80%);
+    position: relative;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    overflow: hidden;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+}
+
+.capsule-bubble {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    transition: all 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.15;
+}
+
+.capsule-wireframe {
+    position: absolute;
+    width: 90px;
+    height: 140px;
+    bottom: 20px;
+    border: 1px dashed rgba(6, 182, 212, 0.2);
+    border-radius: 45px;
+    transform: scale(0.6);
+    opacity: 0;
+    transition: all 1s ease;
+    animation: spin 8s linear infinite;
+}
+
+.capsule-avatar-sprite {
+    width: 70px;
+    height: 120px;
+    bottom: 15px;
+    position: absolute;
+    z-index: 2;
+    transform: translateY(120%);
+    transition: all 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    background-size: contain;
+    background-position: bottom center;
+    background-repeat: no-repeat;
+}
+
+/* Glowing States mapping to Quests */
+/* Level 0: Offline */
+.capsule.state-offline .capsule-glass {
+    border-color: rgba(156, 163, 175, 0.2);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Level 1: Git Connected */
+.capsule.state-git .capsule-glass {
+    border-color: rgba(236, 72, 153, 0.4);
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.15), inset 0 0 15px rgba(236, 72, 153, 0.1);
+}
+.capsule.state-git .capsule-bubble {
+    height: 25%;
+    background: var(--neon-pink);
+}
+
+/* Level 2: Chassis Materialized (Portfolio) */
+.capsule.state-portfolio .capsule-glass {
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.25), inset 0 0 20px rgba(139, 92, 246, 0.15);
+}
+.capsule.state-portfolio .capsule-bubble {
+    height: 50%;
+    background: var(--neon-purple);
+}
+
+/* Level 3: Wireframe Projection (3D scene) */
+.capsule.state-3dweb .capsule-glass {
+    border-color: rgba(6, 182, 212, 0.6);
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.35), inset 0 0 25px rgba(6, 182, 212, 0.2);
+}
+.capsule.state-3dweb .capsule-bubble {
+    height: 75%;
+    background: var(--neon-cyan);
+}
+.capsule.state-3dweb .capsule-wireframe {
+    opacity: 1;
+    transform: scale(0.9);
+}
+
+/* Level 4: Avatar Materialized */
+.capsule.state-avatar .capsule-glass {
+    border-color: rgba(6, 182, 212, 0.8);
+    box-shadow: 0 0 30px rgba(6, 182, 212, 0.4), inset 0 0 30px rgba(6, 182, 212, 0.25);
+}
+.capsule.state-avatar .capsule-bubble {
+    height: 100%;
+    background: linear-gradient(to top, var(--neon-cyan), var(--neon-purple));
+    opacity: 0.25;
+}
+.capsule.state-avatar .capsule-avatar-sprite {
+    transform: translateY(0);
+    opacity: 0.7;
+}
+
+/* Level 5: Mind Synced (Chatbot) */
+.capsule.state-mindsynced .capsule-glass {
+    border-color: var(--neon-green);
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.6), inset 0 0 35px rgba(16, 185, 129, 0.3);
+    background: radial-gradient(circle at 50% 15%, rgba(16, 185, 129, 0.15) 0%, rgba(0, 0, 0, 0.4) 80%);
+}
+.capsule.state-mindsynced .capsule-bubble {
+    height: 100%;
+    background: var(--neon-green);
+    opacity: 0.3;
+    animation: pulseGlow 2s infinite ease-in-out;
+}
+.capsule.state-mindsynced .capsule-avatar-sprite {
+    transform: translateY(0);
+    opacity: 1;
+    animation: avatarFloat 3s infinite ease-in-out;
+}
+
+/* Keyframes */
+@keyframes spin {
+    0% { transform: scale(0.9) rotate(0deg); }
+    100% { transform: scale(0.9) rotate(360deg); }
+}
+
+@keyframes pulseGlow {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.45; }
+}
+
+@keyframes avatarFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* Particle explosion on milestone achievement */
+.milestone-flash {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+    animation: flashEffect 0.8s ease-out;
+}
+
+@keyframes flashEffect {
+    0% { background: rgba(139, 92, 246, 0.5); opacity: 1; }
+    100% { background: transparent; opacity: 0; }
+}

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participant Portal - Avatar Boot Sequence</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 32px;
+            margin-top: 32px;
+        }
+
+        /* Profile card design */
+        .profile-card {
+            padding: 30px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+        }
+
+        .profile-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .profile-username {
+            font-family: var(--font-code);
+            font-size: 0.85rem;
+            color: var(--neon-purple);
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .badge-shelf {
+            width: 100%;
+            text-align: left;
+        }
+
+        .badge-shelf-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 6px;
+        }
+
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+        }
+
+        .badge-icon {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            position: relative;
+            filter: grayscale(1);
+            opacity: 0.3;
+        }
+
+        .badge-icon.unlocked {
+            filter: grayscale(0);
+            opacity: 1;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 8px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Quest Card list */
+        .quest-board {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .quest-card {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 80px 1fr 120px;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+        }
+
+        .quest-card.locked {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .quest-card.completed {
+            border-color: rgba(16, 185, 129, 0.25);
+            background: radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.05) 0%, transparent 40%), var(--card-bg);
+        }
+
+        .quest-card.active {
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+        }
+
+        .quest-num {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: rgba(255, 255, 255, 0.1);
+            text-align: center;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding-right: 20px;
+        }
+
+        .quest-card.active .quest-num {
+            color: var(--neon-purple);
+            text-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+        }
+
+        .quest-card.completed .quest-num {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+
+        .quest-details h3 {
+            font-size: 1.15rem;
+            margin-bottom: 4px;
+        }
+
+        .quest-details p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .quest-status {
+            text-align: right;
+        }
+
+        /* Register overlay styles */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(6, 8, 19, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .register-box {
+            width: 100%;
+            max-width: 440px;
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-family: var(--font-heading);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.25);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* Hologram console */
+        .console-box {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: var(--font-code);
+            font-size: 0.88rem;
+            color: #06b6d4;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 24px;
+            box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.15);
+        }
+
+        .console-line {
+            margin-bottom: 8px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .modal-body {
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 1. Username Registration Overlay -->
+    <div id="register-overlay" class="overlay">
+        <div class="glass-panel register-box">
+            <h2 class="text-neon-cyan" style="font-size:1.8rem; margin-bottom:8px; text-align:center;">INITIATE PROFILE</h2>
+            <p style="color:var(--text-secondary); text-align:center; font-size:0.9rem; margin-bottom:32px;">Initialize your cybernetic avatar profile node to connect with the assembly mainframe.</p>
+            
+            <form id="register-form" onsubmit="registerUser(event)">
+                <div class="form-group">
+                    <label for="reg-username">GitHub Username</label>
+                    <input type="text" id="reg-username" required placeholder="e.g. SanketSalvi">
+                </div>
+                <div class="form-group">
+                    <label for="reg-display">Display Nickname</label>
+                    <input type="text" id="reg-display" placeholder="e.g. Sanket">
+                </div>
+                <button type="submit" class="btn-cyber" style="width:100%; padding:14px; font-size:1rem;">CONNECT MAINBOARD</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Main Dashboard Container -->
+    <div class="container">
+        <header style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:20px;">
+            <div>
+                <h1 class="text-neon-cyan" style="font-size:2rem; font-weight:800;">PARTICIPANT DECK</h1>
+                <p style="color:var(--text-secondary); font-size:0.9rem;">Cybernetic Assembly Mainframe</p>
+            </div>
+            <button class="btn-cyber" onclick="location.href='index.html'" style="padding:10px 18px; background:transparent; border:1px solid rgba(255,255,255,0.15); box-shadow:none;">Exit Deck</button>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Sidebar: User Stats & Badges -->
+            <aside>
+                <div class="glass-panel profile-card">
+                    <div class="profile-avatar" id="avatar-emoji">🌱</div>
+                    <h2 class="profile-name" id="user-display">Loading...</h2>
+                    <p class="profile-username" id="user-git">@loading</p>
+
+                    <div class="stat-box">
+                        <div class="stat-item">
+                            <div class="stat-value" id="user-level">1</div>
+                            <div class="stat-label">Level</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="user-xp">0</div>
+                            <div class="stat-label">Total XP</div>
+                        </div>
+                    </div>
+
+                    <div class="badge-shelf">
+                        <h4 class="badge-shelf-title">Unlocked Chassis Badges</h4>
+                        <div class="badges-grid">
+                            <div class="badge-icon" id="badge-1" title="Git Apprentice (Quest 1)">🔌</div>
+                            <div class="badge-icon" id="badge-2" title="Chassis Sculptor (Quest 2)">🛡️</div>
+                            <div class="badge-icon" id="badge-3" title="Holo Weaver (Quest 3)">🌐</div>
+                            <div class="badge-icon" id="badge-4" title="Physical Incarnate (Quest 4)">🤖</div>
+                            <div class="badge-icon" id="badge-5" title="Cognition Core (Quest 5)">🧠</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content: Quest Board -->
+            <main class="quest-board" id="quest-list">
+                <!-- Quests will be rendered dynamically -->
+            </main>
+        </div>
+    </div>
+
+    <!-- Submission Modal (Glass Panel overlay for active quest submission) -->
+    <div id="submit-overlay" class="overlay" style="display:none;">
+        <div class="glass-panel" style="width:100%; max-width:680px; display:flex; flex-direction:column; overflow:hidden; border-radius:20px; box-shadow: 0 0 40px rgba(0,0,0,0.8);">
+            <div style="padding:24px; border-bottom: 1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center;">
+                <h2 id="modal-title" class="text-neon-cyan" style="font-size:1.4rem;">Submit Quest</h2>
+                <button onclick="closeSubmitModal()" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.5rem;">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="submission-form" onsubmit="processSubmission(event)">
+                    <input type="hidden" id="quest-id-field">
+                    
+                    <div class="form-group">
+                        <label for="sub-repourl">GitHub Repository URL</label>
+                        <input type="url" id="sub-repourl" required placeholder="https://github.com/username/repository-name">
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <div class="form-group">
+                            <label for="sub-tool">Primary GenAI Companion</label>
+                            <select id="sub-tool">
+                                <option value="Gemini">Gemini (High Context)</option>
+                                <option value="Claude">Claude (Advanced Coding)</option>
+                                <option value="ChatGPT">ChatGPT (Speed Code)</option>
+                                <option value="v0">v0 (UI Builder)</option>
+                                <option value="Bolt.new">Bolt.new (Fullstack AI)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex; flex-direction:column; justify-content:center;">
+                            <span style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px; font-family:var(--font-heading); text-transform:uppercase;">Award XP</span>
+                            <span id="modal-xp" class="text-neon-purple" style="font-weight:700; font-size:1.2rem;">+100 XP</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sub-prompt">The Prompt Codex (Exact Prompt Used)</label>
+                        <textarea id="sub-prompt" rows="4" required placeholder="Describe or paste the exact system context and prompts you inputted into the AI to generate your solution..."></textarea>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; gap:16px;">
+                        <button type="button" onclick="closeSubmitModal()" class="btn-cyber" style="background:transparent; border:1px solid rgba(255,255,255,0.15); box-shadow:none; padding:12px 24px;">Abort</button>
+                        <button type="submit" class="btn-cyber" id="submit-btn" style="padding:12px 24px;">RUN AI EVALUATOR</button>
+                    </div>
+                </form>
+
+                <!-- Terminal logs for AI feedback readout -->
+                <div id="evaluator-console" class="console-box" style="display:none;">
+                    <div class="console-line">> Neural link connected...</div>
+                    <div class="console-line">> Triggering AI Evaluator parser...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/state.js"></script>
+    <script src="js/evaluator.js"></script>
+    <script>
+        let currentParticipant = null;
+
+        // Check if username already exists in LocalStorage
+        window.addEventListener('load', () => {
+            const activeUser = localStorage.getItem('active_participant_username');
+            if (activeUser) {
+                document.getElementById('register-overlay').style.display = 'none';
+                loadParticipantData(activeUser);
+            }
+        });
+
+        function registerUser(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value.trim();
+            const display = document.getElementById('reg-display').value.trim() || username;
+
+            if (!username) return;
+
+            const res = WorkshopState.addParticipant(username, display);
+            if (res.success || res.error === 'Username already registered.') {
+                localStorage.setItem('active_participant_username', username);
+                document.getElementById('register-overlay').style.display = 'none';
+                loadParticipantData(username);
+            } else {
+                alert(res.error);
+            }
+        }
+
+        function loadParticipantData(username) {
+            const state = WorkshopState.get();
+            let p = state.participants.find(x => x.username.toLowerCase() === username.toLowerCase());
+            
+            // If they registered but aren't found in current state (e.g. state reset), re-inject them
+            if (!p) {
+                WorkshopState.addParticipant(username, username);
+                p = WorkshopState.get().participants.find(x => x.username.toLowerCase() === username.toLowerCase());
+            }
+
+            currentParticipant = p;
+
+            // Render Profile Card
+            document.getElementById('user-display').innerText = p.displayName;
+            document.getElementById('user-git').innerText = `@${p.username} | Bot: ${p.botName || 'No-Bot'}`;
+            
+            const level = Math.max(1, p.currentQuest);
+            document.getElementById('user-level').innerText = level;
+            document.getElementById('user-xp').innerText = p.xp;
+
+            // Update Avatar Emoji matching quest progression
+            const emojis = ['🌱', '🔌', '🛡️', '🌐', '🤖', '🧠'];
+            document.getElementById('avatar-emoji').innerText = emojis[p.currentQuest] || '🌱';
+
+            // Render Badges
+            for (let i = 1; i <= 5; i++) {
+                const bEl = document.getElementById(`badge-${i}`);
+                if (p.currentQuest >= i) {
+                    bEl.classList.add('unlocked');
+                } else {
+                    bEl.classList.remove('unlocked');
+                }
+            }
+
+            // Render Quests list
+            renderQuestsList(p.currentQuest);
+        }
+
+        function renderQuestsList(currentQuestId) {
+            const container = document.getElementById('quest-list');
+            container.innerHTML = '';
+
+            QUESTS.forEach(q => {
+                let statusClass = 'locked';
+                let statusText = '🔒 System Locked';
+                let actionBtn = '';
+
+                if (currentQuestId >= q.id) {
+                    statusClass = 'completed';
+                    statusText = '✅ Capsule Synced';
+                    actionBtn = `<button class="btn-cyber" onclick="openSubmitModal(${q.id})" style="background:transparent; border: 1px solid var(--neon-green); color: var(--neon-green); box-shadow:none; padding:8px 14px;">Re-eval Code</button>`;
+                } else if (currentQuestId === q.id - 1) {
+                    statusClass = 'active';
+                    statusText = '⚡ Core Ready';
+                    actionBtn = `<button class="btn-cyber" onclick="openSubmitModal(${q.id})" style="padding:8px 14px;">Begin Mission</button>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = `quest-card glass-panel ${statusClass}`;
+                card.innerHTML = `
+                    <div class="quest-num">${q.id}</div>
+                    <div class="quest-details">
+                        <h3 class="${statusClass === 'active' ? 'text-neon-purple' : (statusClass === 'completed' ? 'text-neon-green' : '')}">${q.name}</h3>
+                        <p>${getQuestDescription(q.id)}</p>
+                    </div>
+                    <div class="quest-status">
+                        <div style="font-size:0.75rem; font-family:var(--font-code); color:var(--text-secondary); margin-bottom:8px;">${statusText}</div>
+                        ${actionBtn}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function getQuestDescription(id) {
+            switch(id) {
+                case 1: return 'Boot up your capsule! Establish repository branches, structure files, and trigger your first push to GitHub.';
+                case 2: return 'Materialize your outer shell. Prompt your AI companion to code a beautiful glassmorphic portfolio site.';
+                case 3: return 'Project a 3D hologram. Render custom objects and scenes in the browser using Three.js / Model-Viewer.';
+                case 4: return 'Synthesize your structural clone. Integrate an interactive, custom GLB Ready Player Me avatar.';
+                case 5: return 'Awaken the cognitive core. Integrate a local client smalltalk logic chatbot with speaking synthesizers.';
+                default: return '';
+            }
+        }
+
+        // Modal triggers
+        function openSubmitModal(questId) {
+            const quest = QUESTS.find(q => q.id === questId);
+            document.getElementById('quest-id-field').value = questId;
+            document.getElementById('modal-title').innerText = `Submit Mission ${questId}: ${quest.name}`;
+            document.getElementById('modal-xp').innerText = `+${quest.xp} XP`;
+            
+            // Pre-fill existing submission if completed
+            if (currentParticipant && currentParticipant.submissions[questId]) {
+                const sub = currentParticipant.submissions[questId];
+                document.getElementById('sub-repourl').value = sub.url;
+                document.getElementById('sub-tool').value = sub.tool;
+                document.getElementById('sub-prompt').value = sub.prompt;
+            } else {
+                document.getElementById('sub-repourl').value = '';
+                document.getElementById('sub-prompt').value = '';
+            }
+
+            document.getElementById('evaluator-console').style.display = 'none';
+            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('submit-btn').innerText = 'RUN AI EVALUATOR';
+            document.getElementById('submit-overlay').style.display = 'flex';
+        }
+
+        function closeSubmitModal() {
+            document.getElementById('submit-overlay').style.display = 'none';
+        }
+
+        async function processSubmission(e) {
+            e.preventDefault();
+            const questId = document.getElementById('quest-id-field').value;
+            const repoUrl = document.getElementById('sub-repourl').value.trim();
+            const tool = document.getElementById('sub-tool').value;
+            const promptText = document.getElementById('sub-prompt').value.trim();
+
+            const consoleBox = document.getElementById('evaluator-console');
+            consoleBox.style.display = 'block';
+            consoleBox.innerHTML = '';
+            document.getElementById('submit-btn').disabled = true;
+            document.getElementById('submit-btn').innerText = 'COMPUTING...';
+
+            // Console output logs to simulate deep neural processing
+            const printLog = (text, delay) => new Promise(res => setTimeout(() => {
+                const el = document.createElement('div');
+                el.className = 'console-line';
+                el.innerText = text;
+                consoleBox.appendChild(el);
+                consoleBox.scrollTop = consoleBox.scrollHeight;
+                res();
+            }, delay));
+
+            await printLog(`> Initializing structural connection to ${repoUrl}...`, 400);
+            await printLog(`> Scanning files in active branches...`, 600);
+            await printLog(`> Syncing to prompt validation matrix...`, 500);
+
+            // Execute actual AI evaluation check
+            const evaluation = await AIEvaluator.evaluate(repoUrl, questId, tool, promptText);
+
+            if (evaluation.isValid) {
+                await printLog(`> Code inspection COMPLETE. Structures verified!`, 400);
+                await printLog(`> Prompt rating generated: ${evaluation.score}/100.`, 400);
+                await printLog(`> Finalizing submission... Syncing to projector display!`, 500);
+
+                // Save to State engine
+                WorkshopState.submitQuest(currentParticipant.username, questId, repoUrl, tool, promptText);
+                
+                // Re-load statistics
+                loadParticipantData(currentParticipant.username);
+
+                setTimeout(() => {
+                    alert(`Congratulations! Quest ${questId} Approved. Capsule upgraded!`);
+                    closeSubmitModal();
+                }, 800);
+
+            } else {
+                // If validation failed, display exact missing file guidelines
+                await printLog(`> ❌ FAILED: Code inspection aborted. Missing structures!`, 400);
+                
+                const errDiv = document.createElement('div');
+                errDiv.className = 'console-line';
+                errDiv.style.color = '#ef4444';
+                errDiv.innerHTML = evaluation.feedback.replace(/\n/g, '<br>');
+                consoleBox.appendChild(errDiv);
+                consoleBox.scrollTop = consoleBox.scrollHeight;
+                
+                document.getElementById('submit-btn').disabled = false;
+                document.getElementById('submit-btn').innerText = 'RE-RUN AI EVALUATOR';
+            }
+        }
+    </script>
+</body>
+</html>
