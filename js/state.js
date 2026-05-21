@@ -1,5 +1,13 @@
-// Shared State Engine for the Gamified Web Dev Workshop (Raid Edition)
+// Shared State Engine for the Gamified Web Dev Workshop (Supabase Multiplayer Edition)
 const STORAGE_KEY = 'gamified_workshop_state';
+
+// Supabase Credentials
+const SUPABASE_URL = 'https://mfebtydemixnpstekrij.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_sDuyNE11RgAuegqxWqOPow_YchE0f2c';
+
+// Initialize Supabase Client (if CDN script is loaded)
+const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+let realtimeChannel = null;
 
 // Predefined Quests matching the Cybernetic Assembly Lab Sequence
 const QUESTS = [
@@ -15,7 +23,7 @@ const DEFAULT_PARTICIPANTS = [
     {
         username: 'AnyaDev',
         displayName: 'Anya Sen',
-        botName: 'A-808', // Custom designation
+        botName: 'A-808',
         currentQuest: 5,
         xp: 1500,
         submissions: {
@@ -62,6 +70,60 @@ const DEFAULT_PARTICIPANTS = [
 ];
 
 class WorkshopState {
+    static initRealtime() {
+        if (!supabaseClient) {
+            console.warn("Supabase CDN not loaded. Falling back to LocalStorage only.");
+            return;
+        }
+
+        // Initialize a broadcast channel for ephemeral state syncing
+        realtimeChannel = supabaseClient.channel('workshop-raid-state', {
+            config: {
+                broadcast: { ack: false },
+            },
+        });
+
+        // Listen for state sync broadcasts from other users
+        realtimeChannel.on('broadcast', { event: 'state_sync' }, payload => {
+            console.log('📡 [Supabase] Received global state sync over network');
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.payload));
+            window.dispatchEvent(new Event('workshopStateChanged'));
+        });
+
+        // Listen for state requests from new users who just joined
+        realtimeChannel.on('broadcast', { event: 'request_state' }, () => {
+            console.log('📡 [Supabase] Network peer requested state, broadcasting...');
+            const state = this.get();
+            if (state && state.participants && state.participants.length > 0) {
+                this.broadcastFullState(state);
+            }
+        });
+
+        // Connect to the channel
+        realtimeChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                console.log('🚀 Connected to Supabase Realtime Network!');
+                
+                // Immediately request the latest state from any active admin/users
+                realtimeChannel.send({
+                    type: 'broadcast',
+                    event: 'request_state',
+                    payload: {}
+                });
+            }
+        });
+    }
+
+    static broadcastFullState(state) {
+        if (realtimeChannel) {
+            realtimeChannel.send({
+                type: 'broadcast',
+                event: 'state_sync',
+                payload: state
+            });
+        }
+    }
+
     static get() {
         const data = localStorage.getItem(STORAGE_KEY);
         if (!data) {
@@ -75,14 +137,15 @@ class WorkshopState {
     static save(state) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         window.dispatchEvent(new Event('workshopStateChanged'));
+        // Broadcast change over network instantly!
+        this.broadcastFullState(state);
     }
 
     static generateBotName(username) {
         const firstLetter = username.charAt(0).toUpperCase();
-        // Dynamic alphanumeric designation, e.g. S-909 or K-202
         const letters = 'XYZKTW';
         const randomChar = letters.charAt(Math.floor(Math.random() * letters.length));
-        const num = Math.floor(Math.random() * 900) + 100; // 100 - 999
+        const num = Math.floor(Math.random() * 900) + 100;
         return `${firstLetter}${randomChar}-${num}`;
     }
 
@@ -115,7 +178,6 @@ class WorkshopState {
         const quest = QUESTS.find(q => q.id === questId);
         if (!quest) return { error: 'Invalid Quest.' };
 
-        // Save submission details
         participant.submissions[questId] = {
             url: repoUrl,
             tool: tool,
@@ -123,7 +185,6 @@ class WorkshopState {
             timestamp: new Date().toISOString()
         };
 
-        // Advance quest tier if higher than current
         if (participant.currentQuest < questId) {
             participant.currentQuest = questId;
             let totalXp = 0;
@@ -139,7 +200,11 @@ class WorkshopState {
 
     static reset() {
         const initialState = { participants: DEFAULT_PARTICIPANTS };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialState));
-        window.dispatchEvent(new Event('workshopStateChanged'));
+        this.save(initialState);
     }
 }
+
+// Auto-initialize real-time multiplayer connection when the file loads
+setTimeout(() => {
+    WorkshopState.initRealtime();
+}, 200);
