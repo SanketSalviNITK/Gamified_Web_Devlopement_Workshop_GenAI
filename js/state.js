@@ -19,55 +19,7 @@ const QUESTS = [
 ];
 
 // Initial mock participants with unique Bot Designations
-const DEFAULT_PARTICIPANTS = [
-    {
-        username: 'AnyaDev',
-        displayName: 'Anya Sen',
-        botName: 'A-808',
-        currentQuest: 5,
-        xp: 1500,
-        submissions: {
-            1: { url: 'https://github.com/anyadev/forge-boot', tool: 'Gemini', prompt: 'Create a detailed readme detailing git workflows with an interactive ASCII guide.' },
-            2: { url: 'https://github.com/anyadev/glass-portfolio', tool: 'ChatGPT', prompt: 'Generate a glassmorphic personal profile card with pure CSS neon gradients.' },
-            3: { url: 'https://github.com/anyadev/threejs-scene', tool: 'Claude', prompt: 'Set up an elegant Three.js scene with a spinning coordinate grid and directional orbital lighting.' },
-            4: { url: 'https://github.com/anyadev/avatar-readyplayer', tool: 'Gemini', prompt: 'Load a GLB ReadyPlayerMe avatar into Three.js and bind it to basic cursor-follow triggers.' },
-            5: { url: 'https://github.com/anyadev/bot-awakened', tool: 'ChatGPT', prompt: 'Write a smalltalk client-side script with regex matches and Web Speech API speaking synthesizers.' }
-        }
-    },
-    {
-        username: 'NikhilCode',
-        displayName: 'Nikhil R.',
-        botName: 'N-404',
-        currentQuest: 3,
-        xp: 600,
-        submissions: {
-            1: { url: 'https://github.com/nikhilc/forge-boot', tool: 'Claude', prompt: 'Give me a shell script for quick git commits and branch initializations.' },
-            2: { url: 'https://github.com/nikhilc/glass-portfolio', tool: 'Gemini', prompt: 'Build a dark cyber-themed portfolio with multiple section scrolling tabs and animated links.' },
-            3: { url: 'https://github.com/nikhilc/threejs-scene', tool: 'ChatGPT', prompt: 'Write a simple model-viewer page to load and auto-rotate a 3D robot model.' }
-        }
-    },
-    {
-        username: 'PriyaTech',
-        displayName: 'Priya Patel',
-        botName: 'P-707',
-        currentQuest: 2,
-        xp: 300,
-        submissions: {
-            1: { url: 'https://github.com/priyatech/forge-boot', tool: 'ChatGPT', prompt: 'Explain git init, clone, add, commit, and push in a clean, simple markdown format.' },
-            2: { url: 'https://github.com/priyatech/glass-portfolio', tool: 'Claude', prompt: 'Create a premium responsive glassmorphic personal website template for a designer.' }
-        }
-    },
-    {
-        username: 'VikramAI',
-        displayName: 'Vikram S.',
-        botName: 'V-303',
-        currentQuest: 1,
-        xp: 100,
-        submissions: {
-            1: { url: 'https://github.com/vikramai/forge-boot', tool: 'Gemini', prompt: 'Guide me step by step on pushing an existing directory to a new github repository.' }
-        }
-    }
-];
+const DEFAULT_PARTICIPANTS = [];
 
 class WorkshopState {
     static initRealtime() {
