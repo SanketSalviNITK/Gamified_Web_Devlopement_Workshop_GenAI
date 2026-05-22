@@ -270,6 +270,48 @@
             overflow-y: auto;
             padding: 24px;
         }
+        /* Markdown rendering inside Intel Modal */
+        .markdown-body {
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+            color: var(--neon-cyan);
+            margin-top: 24px;
+            margin-bottom: 16px;
+        }
+        .markdown-body p { margin-bottom: 16px; }
+        .markdown-body ul, .markdown-body ol { margin-bottom: 16px; padding-left: 24px; }
+        .markdown-body blockquote {
+            border-left: 4px solid var(--neon-purple);
+            background: rgba(139, 92, 246, 0.1);
+            padding: 12px 16px;
+            margin: 0 0 16px 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+        }
+        .markdown-body code {
+            font-family: var(--font-code);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--neon-cyan);
+        }
+        .markdown-body pre {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+        .markdown-body pre code {
+            background: transparent;
+            padding: 0;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -396,7 +438,24 @@
         </div>
     </div>
 
+    <!-- Mission Intel Modal -->
+    <div id="intel-overlay" class="overlay" style="display:none;">
+        <div class="glass-panel" style="width:100%; max-width:800px; max-height:90vh; display:flex; flex-direction:column; overflow:hidden; border-radius:20px; box-shadow: 0 0 40px rgba(0,0,0,0.8);">
+            <div style="padding:24px; border-bottom: 1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center;">
+                <h2 class="text-neon-cyan" style="font-size:1.4rem;">Mission Intel & Prompt Codex</h2>
+                <button onclick="closeIntelModal()" style="background:transparent; border:none; color:var(--text-secondary); cursor:pointer; font-size:1.5rem;">&times;</button>
+            </div>
+            <div class="modal-body" id="intel-content" style="padding:24px; overflow-y:auto; flex:1;">
+                <div style="text-align:center; padding:40px;">Decrypting transmission...</div>
+            </div>
+            <div style="padding:16px 24px; border-top: 1px solid rgba(255,255,255,0.08); display:flex; justify-content:flex-end;">
+                <button onclick="closeIntelModal()" class="btn-cyber" style="padding:10px 20px;">Acknowledge & Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/state.js"></script>
     <script src="js/evaluator.js"></script>
@@ -476,14 +535,18 @@
                 let statusText = '🔒 System Locked';
                 let actionBtn = '';
 
+                let intelBtn = `<button class="btn-cyber" onclick="openIntelModal(${q.id})" style="background:transparent; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); box-shadow:none; padding:8px 14px; margin-right:8px;">View Intel</button>`;
+
                 if (currentQuestId >= q.id) {
                     statusClass = 'completed';
                     statusText = '✅ Capsule Synced';
-                    actionBtn = `<button class="btn-cyber" onclick="openSubmitModal(${q.id})" style="background:transparent; border: 1px solid var(--neon-green); color: var(--neon-green); box-shadow:none; padding:8px 14px;">Re-eval Code</button>`;
+                    actionBtn = intelBtn + `<button class="btn-cyber" onclick="openSubmitModal(${q.id})" style="background:transparent; border: 1px solid var(--neon-green); color: var(--neon-green); box-shadow:none; padding:8px 14px;">Re-eval Code</button>`;
                 } else if (currentQuestId === q.id - 1) {
                     statusClass = 'active';
                     statusText = '⚡ Core Ready';
-                    actionBtn = `<button class="btn-cyber" onclick="openSubmitModal(${q.id})" style="padding:8px 14px;">Begin Mission</button>`;
+                    actionBtn = intelBtn + `<button class="btn-cyber" onclick="openSubmitModal(${q.id})" style="padding:8px 14px;">Begin Mission</button>`;
+                } else {
+                    actionBtn = `<button class="btn-cyber" style="opacity:0.5; cursor:not-allowed; padding:8px 14px;">Locked</button>`;
                 }
 
                 const card = document.createElement('div');
@@ -496,7 +559,7 @@
                     </div>
                     <div class="quest-status">
                         <div style="font-size:0.75rem; font-family:var(--font-code); color:var(--text-secondary); margin-bottom:8px;">${statusText}</div>
-                        ${actionBtn}
+                        <div style="display:flex; justify-content:flex-end;">${actionBtn}</div>
                     </div>
                 `;
                 container.appendChild(card);
@@ -540,6 +603,32 @@
 
         function closeSubmitModal() {
             document.getElementById('submit-overlay').style.display = 'none';
+        }
+
+        // Intel Modal Logic
+        const QUEST_FILES = {
+            1: 'Quest_1_Boot_Mainframe.md',
+            2: 'Quest_2_Identity_Shell.md',
+            3: 'Quest_3_Holo_Projection.md',
+            4: 'Quest_4_Chassis_Sync.md',
+            5: 'Quest_5_Consciousness.md'
+        };
+
+        async function openIntelModal(questId) {
+            document.getElementById('intel-overlay').style.display = 'flex';
+            document.getElementById('intel-content').innerHTML = '<div style="text-align:center; padding:40px;">Decrypting transmission...</div>';
+            try {
+                const response = await fetch(`Walkthrough/${QUEST_FILES[questId]}`);
+                if (!response.ok) throw new Error('File not found');
+                const text = await response.text();
+                document.getElementById('intel-content').innerHTML = `<div class="markdown-body">${marked.parse(text)}</div>`;
+            } catch (err) {
+                document.getElementById('intel-content').innerHTML = `<div style="color:#ef4444;">Signal Lost: Could not load intel for this mission.</div>`;
+            }
+        }
+
+        function closeIntelModal() {
+            document.getElementById('intel-overlay').style.display = 'none';
         }
 
         async function processSubmission(e) {
