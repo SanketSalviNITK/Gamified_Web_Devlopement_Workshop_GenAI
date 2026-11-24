@@ -10,10 +10,10 @@ Welcome to the **Gamified Web Development Workshop**, an interactive, multiplaye
 
 ## 🌟 Key Features
 
-* **Real-time Multiplayer Sync**: Uses **Supabase Realtime Channels** to synchronize participant progress instantly across all devices. No backend server required.
+* **Verified progress**: Students sign in with GitHub. A Supabase Edge Function checks each submission against the student's real repository (ownership, new commits, and the code each quest requires) before it counts. Progress is stored in Supabase tables with row level security and pushed live to every screen. See [docs/SETUP_VERIFIED_PROGRESS.md](docs/SETUP_VERIFIED_PROGRESS.md).
 * **3D Admin Dashboard (`admin.html`)**: A stunning Three.js projector view for instructors. It dynamically renders a physical "robot capsule" for every connected participant, evolving visually as they complete quests.
 * **Participant Deck (`participant.html`)**: A personal control panel where students receive missions, track their XP, and submit their GitHub repository links.
-* **AI Evaluator**: An automated validation engine that fetches the participant's submitted GitHub repository via the GitHub API and "evaluates" if they successfully completed the required code changes for the mission.
+* **Quest verifier**: Shows students exactly what will be checked, then reports each check with a hint for anything missing.
 * **In-Game Mission Intel**: Instructions and GenAI "Meta-Prompts" are fetched dynamically from markdown files and rendered in the browser using `marked.js`.
 
 ---
@@ -41,15 +41,14 @@ cd Gamified_Web_Devlopement_Workshop_GenAI
 ```
 
 ### 2. Configure Supabase
-This project relies on Supabase for real-time WebSocket communication.
-1. Create a free project on [Supabase](https://supabase.com).
-2. You do **not** need to set up a database schema. The app uses *Supabase Realtime Broadcast Channels* which are stateless.
-3. In your Supabase dashboard, go to your project settings -> API.
-4. Open `js/state.js` and replace the Supabase URL and Anon Key with your own:
+This project uses Supabase for GitHub sign-in, the progress database, the `verify-quest` function and realtime updates.
+Follow **[docs/SETUP_VERIFIED_PROGRESS.md](docs/SETUP_VERIFIED_PROGRESS.md)**: run one SQL migration, enable GitHub sign-in, and deploy the function.
+To use your own Supabase project, replace the URL and publishable key in `js/state.js`:
 ```javascript
 const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+const SUPABASE_KEY = 'YOUR_PUBLISHABLE_KEY';
 ```
+Until the migration has been applied, the pages fall back to the original unverified mode.
 
 ### 3. Deploy to Vercel
 This project contains a `vercel.json` file for routing and security headers. 
@@ -63,11 +62,11 @@ This project contains a `vercel.json` file for routing and security headers.
 
 1. **Instructor**: Opens `admin.html` on a projector or shared screen. This is the global scoreboard and 3D visualization arena.
 2. **Participants**: Open `participant.html` on their local laptops.
-3. Participants enter their GitHub username to register. Their "capsule" instantly materializes on the instructor's projector.
+3. Participants sign in with GitHub. Their bot instantly materializes on the instructor's projector.
 4. Participants click **"View Intel"** on their active quest to get the Meta-Prompt.
 5. They feed the Meta-Prompt to an AI (like ChatGPT), get the code, and apply it to their local codebase.
 6. They push their code to their GitHub repo.
-7. They submit their GitHub Repo URL in the Participant Deck. The automated **AI Evaluator** validates their repo.
+7. They submit their GitHub Repo URL in the Participant Deck. The **quest verifier** checks the repository on GitHub.
 8. If successful, they earn XP, their capsule upgrades on the projector, and the next mission unlocks!
 
 ---
@@ -82,12 +81,12 @@ This project contains a `vercel.json` file for routing and security headers.
 
 `arena.html` is a redesigned projector view, built entirely with Three.js: every bot, the boss, the arena and all effects are procedural, with no external 3D models. It runs alongside the original `admin.html`.
 
-**Live by default.** The arena reads the same shared state as `participant.html` and `admin.html` (`js/state.js`, synced over Supabase Realtime, or through localStorage between tabs of one browser):
+**Live by default.** The arena reads the same shared state as `participant.html` and `admin.html` (`js/state.js`). With verified progress set up it shows **● LIVE · VERIFIED** and every hit is a quest the server checked on GitHub; add `?cohort=<code>` to show a specific cohort.
 * Every registered participant becomes a bot, starting in a stasis pod.
 * Every quest they pass is a critical hit that bolts on the next part. The banner and feed name the student, the module and the submitted repository.
 * Boss health is the cohort's real progress: 100% minus quests passed out of 5 per participant (the same formula as `admin.html`). A new participant joining makes the boss stronger.
 * When every participant has passed all five quests, the boss is defeated.
-* A participant's class and bot colour are derived from their username until the participant page lets them choose.
+* Students choose their bot's class and chassis colour on the participant page; the bot rebuilds live on the projector.
 
 **Features**
 * **Bots that assemble part by part:** Stasis Pod → Power Core (M1) → Chassis in the student's colour (M2) → Holo Wings (M3) → Avatar Head (M4) → Voice Core (M5). Proportions, eyes and antenna come from the username, and the class (Architect, Engineer, Promptsmith) adds drones, a cannon arm or orbiting glyphs.

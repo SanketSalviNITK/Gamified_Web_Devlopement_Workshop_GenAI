@@ -264,6 +264,23 @@ const repoLabel = (url) => {
     return m ? m[1].replace(/\.git$/, '') : '';
 };
 
+// A student changed their bot class or chassis colour on the participant page: rebuild their bot in place.
+function restyleRaider(r, { cls, color }) {
+    const old = r.bot;
+    r.cls = cls;
+    r.color = color;
+    r.bot = new Bot({ id: r.id, name: r.name, cls, stage: r.stage, color });
+    r.bot.root.position.copy(old.root.position);
+    r.bot.root.rotation.copy(old.root.rotation);
+    r.bot.root.scale.copy(old.root.scale);
+    scene.remove(old.root);
+    scene.add(r.bot.root);
+    hud.removePlate(r.id);
+    hud.addPlate(r.id, r.name, color);
+    particles.burst(r.bot.root.position.clone().setY(1.6), { count: 50, speed: 5, color: C(color, 2.4), size: 0.4, life: 0.8, up: 2 });
+    hud.feed(`<b>${escapeHtml(r.name)}</b> rebuilt their bot as ${CLASSES[cls].label}`, 'join');
+}
+
 function syncLive(initial = false) {
     const state = readWorkshopState();
     const json = JSON.stringify(state.participants || []);
@@ -292,8 +309,13 @@ function syncLive(initial = false) {
             live.known.set(id, initial ? quest : 0);
         }
         r.xp = p.xp | 0;
+        const look = lookFor(p, id);
+        if (look.cls !== r.cls || look.color !== r.color) restyleRaider(r, look);
         const had = live.known.get(id) ?? 0;
-        for (let q = had + 1; q <= quest; q++) hits.push({ r, q, repo: repoLabel(p.submissions?.[q]?.url) });
+        for (let q = had + 1; q <= quest; q++) {
+            const sub = p.submissions?.[q];
+            hits.push({ r, q, repo: repoLabel(sub?.url), commit: typeof sub?.commit === 'string' ? sub.commit.slice(0, 7) : '' });
+        }
         if (quest < had) { r.stage = quest; r.bot.setStage(quest, false); } // progress was reset
         live.known.set(id, quest);
     }
@@ -321,14 +343,14 @@ function syncLive(initial = false) {
     }
     if (!n) { resetRaid(false); setHp(100, { quiet: true }); hud.banner('WAITING FOR RAIDERS', 'Join from participant.html to enter the arena', 'phase', 3); }
 
-    hits.forEach(({ r, q, repo }, i) => {
+    hits.forEach(({ r, q, repo, commit }, i) => {
         live.pending++;
         later(0.3 + i * 0.7, () => {
             const st = STAGES[q];
             raiderEvent('lab', r, {
-                dmg: perQuest, repo,
+                dmg: perQuest, repo: repo && commit ? `${repo}@${commit}` : repo,
                 title: 'CRITICAL HIT',
-                note: `<b>${escapeHtml(r.name)}</b> passed <i>${st.module}</i>${repo ? ` · <code>${escapeHtml(repo)}</code>` : ''}`,
+                note: `<b>${escapeHtml(r.name)}</b> passed <i>${st.module}</i>${repo ? ` · <code>${escapeHtml(repo)}${commit ? '@' + escapeHtml(commit) : ''}</code>` : ''}`,
                 onLand: () => {
                     live.pending = Math.max(0, live.pending - 1);
                     if (!live.pending && !S.defeated && Math.abs(S.hp - live.target) > 0.01) setHp(live.target);
@@ -338,7 +360,11 @@ function syncLive(initial = false) {
     });
 }
 
-function startLive() {
+async function startLive() {
+    // Wait for the first roster load so existing progress appears instantly instead of replaying as hits.
+    try { if (typeof WorkshopState !== 'undefined') await WorkshopState.ready; } catch { /* fall through */ }
+    const verified = typeof WorkshopState !== 'undefined' && WorkshopState.mode === 'database';
+    document.body.classList.toggle('verified', verified);
     syncLive(true);
     live.started = true;
     window.addEventListener('workshopStateChanged', () => syncLive());
@@ -347,7 +373,9 @@ function startLive() {
     const n = S.raiders.length;
     later(0.6, () => hud.banner(n ? 'RAID IN PROGRESS' : 'WAITING FOR RAIDERS',
         n ? `<b>${n}</b> raider${n > 1 ? 's' : ''} connected · every quest you pass hits the boss` : 'Join from participant.html to enter the arena', 'phase', 3));
-    hud.feed(`<b>Live raid.</b> Boss health is the cohort's real quest progress`, 'info');
+    hud.feed(verified
+        ? `<b>Live raid.</b> Every hit is a quest verified against the student's GitHub repository`
+        : `<b>Live raid (unverified).</b> Apply the database migration to verify progress`, 'info');
     later(1.6, () => bossLaugh(n ? 'Another cohort? Your code will crumble.' : 'No raiders? Then I win by default.'));
 }
 
@@ -817,7 +845,8 @@ if (VIEW === 'lineup') {
         later(0.6, () => hud.banner('RAID INITIALISED', `<b>${S.raiders.length}</b> raiders connected · defeat the Glitch Overlord together`, 'phase', 3));
         later(1.6, () => bossLaugh('Another cohort? Your code will crumble.'));
     }
-    const join = `${location.origin}${location.pathname.replace(/arena(\.html)?$/, '')}participant.html`;
+    const cohortParam = typeof WorkshopState !== 'undefined' && WorkshopState.cohort !== 'workshop' ? `?cohort=${WorkshopState.cohort}` : '';
+    const join = `${location.origin}${location.pathname.replace(/arena(\.html)?$/, '')}participant.html${cohortParam}`;
     document.getElementById('join-url').textContent = join.replace(/^https?:\/\//, '');
 }
 
