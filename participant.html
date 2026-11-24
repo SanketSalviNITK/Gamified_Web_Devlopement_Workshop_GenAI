@@ -542,9 +542,25 @@
         async function startVerified() {
             document.getElementById('auth-github').style.display = '';
             document.getElementById('cohort-label').textContent = WorkshopState.cohort;
-            const { data: { session } } = await sb.auth.getSession();
-            if (session) await enterDeck(session.user);
             sb.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') location.reload(); });
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) return enterDeck(session.user);
+            // Until the instructor has switched on GitHub sign-in in Supabase, say so instead of offering a button that errors.
+            if (!(await githubSignInEnabled())) {
+                document.getElementById('github-btn').style.display = 'none';
+                showAuthError('Sign-in opens soon: your instructor is finishing the setup. Please check back in a few minutes.');
+            }
+        }
+
+        async function githubSignInEnabled() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_KEY } });
+                if (!res.ok) return true; // can't tell: let the button try
+                const settings = await res.json();
+                return !!(settings.external && settings.external.github);
+            } catch {
+                return true;
+            }
         }
 
         function showAuthError(message) {
