@@ -4,7 +4,7 @@
 
 Welcome to the **Gamified Web Development Workshop**, an interactive, multiplayer, cyber-themed educational experience. This platform teaches students web development (HTML, CSS, JS, and Three.js) by having them use Generative AI tools (ChatGPT, Gemini, Claude) as their "coding assistants."
 
-**Live Demo / Participant Link:** [Play on Vercel](https://gamified-web-devlopement-workshop-genai.vercel.app/) *(Update this link if your Vercel deployment URL differs)*
+**Live workshop:** [sanketsalvinitk.github.io/Gamified_Web_Devlopement_Workshop_GenAI](https://sanketsalvinitk.github.io/Gamified_Web_Devlopement_Workshop_GenAI/) (hosted on GitHub Pages)
 
 ---
 
@@ -50,11 +50,11 @@ const SUPABASE_KEY = 'YOUR_PUBLISHABLE_KEY';
 ```
 Until the migration has been applied, the pages fall back to the original unverified mode.
 
-### 3. Deploy to Vercel
-This project contains a `vercel.json` file for routing and security headers. 
-1. Push your repository to GitHub.
-2. Import the repository into [Vercel](https://vercel.com).
-3. Vercel will automatically detect the static files and deploy them.
+### 3. Publish on GitHub Pages
+The site is plain static files, so GitHub Pages serves it as-is:
+1. In the repository go to **Settings → Pages**, choose **Deploy from a branch**, branch `main`, folder `/ (root)`.
+2. Keep the empty `.nojekyll` file in the root: it stops GitHub Pages from skipping folders that start with `_` (the verifier's shared rules live in `supabase/functions/_shared/`).
+3. Add the site address to Supabase's allowed redirect URLs (see the setup guide) so GitHub sign-in returns students to it.
 
 ---
 

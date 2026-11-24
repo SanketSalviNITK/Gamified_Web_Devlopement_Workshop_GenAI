@@ -30,13 +30,13 @@ It also creates the default cohort `workshop`, the `raid_roster()` function the 
 ## 2. Turn on "Sign in with GitHub"
 
 1. On GitHub: **Settings → Developer settings → OAuth Apps → New OAuth App**.
-   * Homepage URL: your site, e.g. `https://gamified-web-devlopement-workshop-genai.vercel.app`
+   * Homepage URL: your site, e.g. `https://sanketsalvinitk.github.io/Gamified_Web_Devlopement_Workshop_GenAI/`
    * Authorization callback URL: `https://mfebtydemixnpstekrij.supabase.co/auth/v1/callback`
    * Create it, then **Generate a new client secret**.
 2. In Supabase: **Authentication → Sign In / Providers → GitHub**: enable it and paste the client ID and secret.
 3. In Supabase: **Authentication → URL Configuration**:
    * Site URL: your site URL.
-   * Redirect URLs: add `https://<your-site>/**` and, for local testing, `http://localhost:3000/**`.
+   * Redirect URLs: add `https://sanketsalvinitk.github.io/Gamified_Web_Devlopement_Workshop_GenAI/**` and, for local testing, `http://localhost:3000/**`.
 
 GitHub shares the student's username, name and email address with the project. Nothing is posted to their account.
 
