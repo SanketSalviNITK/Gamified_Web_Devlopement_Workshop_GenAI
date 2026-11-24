@@ -82,6 +82,8 @@ export class Boss {
         this.defeated = false;
         this.defeatT = 0;
         this.hp = 1;
+        this.laughT = 0;
+        this.laughH = 1;
 
         this.buildCore();
         this.buildShell();
@@ -197,7 +199,7 @@ export class Boss {
         this.maskHome = mask.position.clone();
         this.body.add(mask);
         this.mouth = new THREE.Object3D();
-        this.mouth.position.set(0, -1.6, 4.2);
+        this.mouth.position.set(5.2, 0.4, 2.5); // speech anchor: right of the face
         this.body.add(this.mouth);
     }
 
@@ -289,6 +291,9 @@ export class Boss {
 
     taunt(dur = 2.4) { this.jaw = dur; }
 
+    /** Laugh body language: head thrown back and shaking, scaled by how healthy it feels. */
+    laugh(dur, health) { this.laughT = dur; this.laughDur = dur; this.laughH = health; }
+
     mouthWorld(out) { this.root.updateMatrixWorld(true); return this.mouth.getWorldPosition(out); }
 
     detach(p, explosive = false) {
@@ -302,6 +307,16 @@ export class Boss {
         p.spin.set((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
         p.life = 0;
         p.grounded = false;
+    }
+
+    regrow(p) {
+        p.attached = true;
+        this.body.add(p.mesh);
+        p.mesh.position.copy(p.home);
+        p.mesh.rotation.set(0, 0, 0);
+        p.mesh.scale.setScalar(0.0001);
+        p.mesh.visible = true;
+        p.grow = 0;
     }
 
     defeat() {
@@ -346,10 +361,20 @@ export class Boss {
         // shell plates break away as HP drops from 100% to 33%
         if (!this.defeated) {
             const keep = Math.round(this.plates.length * clamp((hpFrac - 0.33) / 0.67, 0, 1));
-            this.plates.forEach((p, i) => { if (i >= keep && p.attached) this.detach(p); });
+            this.plates.forEach((p, i) => {
+                if (i >= keep && p.attached) this.detach(p);
+                else if (i < keep && !p.attached && (!p.mesh.visible || p.life > 3.2)) this.regrow(p);
+            });
         }
         for (const p of this.plates) {
-            if (p.attached) continue;
+            if (p.attached) {
+                if (p.grow !== undefined) {
+                    p.grow = Math.min(1, p.grow + dt * 2.5);
+                    p.mesh.scale.setScalar(Math.max(0.0001, easeOutBack(p.grow)));
+                    if (p.grow >= 1) p.grow = undefined;
+                }
+                continue;
+            }
             p.life += dt;
             const m = p.mesh;
             if (!m.visible) continue;
@@ -377,10 +402,18 @@ export class Boss {
         this.flinch.multiplyScalar(Math.exp(-6 * dt));
         this.flash = Math.max(0, this.flash - dt * 3.2);
         this.punch = Math.max(0, this.punch - dt * 4);
-        this.body.rotation.x = this.flinch.x;
+        let laughTilt = 0, laughBob = 0;
+        if (this.laughT > 0) {
+            this.laughT -= dt;
+            const k = Math.min(1, this.laughT / 0.4) * (0.3 + this.laughH * 0.7);
+            laughTilt = -0.22 * k;                                   // head thrown back
+            laughBob = Math.abs(Math.sin(t * 16)) * 0.45 * k;        // shoulders shaking
+            this.flash = Math.max(this.flash, 0.12 * this.laughH);
+        }
+        this.body.rotation.x = this.flinch.x + laughTilt;
         this.body.rotation.z = this.flinch.y;
         this.body.rotation.y = Math.sin(t * 0.3) * 0.22;
-        this.body.position.y = Math.sin(t * 0.8) * 0.35;
+        this.body.position.y = Math.sin(t * 0.8) * 0.35 + laughBob;
         this.body.scale.setScalar(1 + this.punch * 0.08 + Math.sin(t * 2.2) * 0.012);
 
         this.core.rotation.y += dt * (0.3 + lowHp * 0.9);

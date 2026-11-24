@@ -31,6 +31,10 @@
         .bar i { display: block; height: 100%; background: var(--corrupt); width: 100%; transition: width 0.3s; }
         #offline { display: none; padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--corrupt); color: var(--corrupt); margin-bottom: 16px; font-size: 0.9rem; }
         #offline.show { display: block; }
+        #live-note { display: none; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--green); color: var(--green); margin-bottom: 16px; font-size: 0.9rem; }
+        body.live #live-note { display: block; }
+        button:disabled { opacity: 0.35; cursor: not-allowed; }
+        label:has(input:disabled) { opacity: 0.4; }
         section { background: var(--panel); border: 1px solid var(--edge); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
         section h2 { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
@@ -61,6 +65,7 @@
         <a class="link" href="arena.html" target="_blank" rel="noopener">Open arena ↗</a>
     </header>
 
+    <div id="live-note">● <b>Live raid.</b> Bots and boss health follow real quest submissions, so the simulated actions are switched off. Open the arena with <code>?demo=1</code> to rehearse with them.</div>
     <div id="offline">No arena detected. Open <a class="link" href="arena.html" target="_blank" rel="noopener">arena.html</a> in another tab or window of this browser.</div>
 
     <div class="status">
@@ -103,7 +108,7 @@
         </div>
         <div class="grid">
             <button class="gold" data-cmd="defeat">Final blow<small>Defeat the boss now</small></button>
-            <button data-cmd="reset">Reset raid<small>Boss back to full HP</small></button>
+            <button data-cmd="reset">Reset raid<small>Demo: full HP · Live: re-sync with progress</small></button>
         </div>
     </section>
 
@@ -130,6 +135,13 @@
             const s = e.data;
             if (s?.type !== 'status') return;
             lastSeen = Date.now();
+            const isLive = s.mode === 'live';
+            document.body.classList.toggle('live', isLive);
+            document.querySelectorAll('button[data-cmd]').forEach((b) => {
+                b.disabled = isLive && !['taunt', 'shockwave', 'reset'].includes(b.dataset.cmd);
+            });
+            $('demo').disabled = isLive;
+            $('speed').disabled = isLive;
             $('hp').textContent = `${Math.ceil(s.hp)}%`;
             $('hp-bar').style.width = `${s.hp}%`;
             $('phase').textContent = s.phase;

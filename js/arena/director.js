@@ -27,7 +27,7 @@ export class Director {
         const bp = bot.root.getWorldPosition(V(0, 0, 0));
         const away = bp.clone().sub(bossPos).setY(0).normalize();
         const side = V(-away.z, 0, away.x);
-        this.fPos.copy(bp).addScaledVector(away, 7.5).addScaledVector(side, 3).add(V(0, 3.4, 0));
+        this.fPos.copy(bp).addScaledVector(away, 11).addScaledVector(side, 3.5).add(V(0, 5, 0));
         this.fLook.copy(bp).lerp(bossPos, 0.5).add(V(0, 1.2, 0));
         this.mode = 'focus';
         this.modeT = 2.1;

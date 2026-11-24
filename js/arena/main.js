@@ -1,8 +1,12 @@
-// Glitch Arena: projector view for the cohort raid (vertical-slice prototype).
+// Glitch Arena: projector view for the cohort raid.
+//
+// By default the arena is LIVE: every participant registered through participant.html
+// becomes a bot, and every quest they pass is a critical hit that bolts on the next part.
+// Boss health is the cohort's real progress: 100% minus (quests passed / (5 x participants)).
 //
 // URL options
+//   ?demo=1          simulated cohort instead of real progress (for rehearsals and showcases)
 //   ?view=lineup     design review: one bot at every stage, side by side
-//   ?demo=0          no simulated cohort activity (drive it from arena-control.html)
 //   ?n=24            simulated cohort size (1-60)
 //   ?speed=1.5       simulation speed
 //   ?motion=reduced  no camera swoops, shake or heavy glitching
@@ -27,7 +31,8 @@ import { CLASSES, CLASS_KEYS, THEME_COLORS, STAGES, clamp, damp, pick, randomCom
 const params = new URLSearchParams(location.search);
 const VIEW = params.get('view') === 'lineup' ? 'lineup' : 'arena';
 const REDUCED = params.get('motion') === 'reduced' || matchMedia('(prefers-reduced-motion: reduce)').matches;
-let demo = params.get('demo') !== '0';
+const LIVE = VIEW === 'arena' && params.get('demo') !== '1';
+let demo = !LIVE;
 let speed = clamp(parseFloat(params.get('speed') || '1') || 1, 0.25, 4);
 const N = clamp(parseInt(params.get('n') || '24', 10) || 24, 1, 60);
 
@@ -209,6 +214,143 @@ function later(sec, fn) { timers.push({ t: sec, fn }); }
 
 const findRaider = (id) => S.raiders.find((r) => r.id === id || r.name === id);
 
+function removeRaider(r) {
+    scene.remove(r.bot.root);
+    hud.removePlate(r.id);
+    S.raiders.splice(S.raiders.indexOf(r), 1);
+    relayout();
+}
+
+const phaseFor = (hp) => (hp > 66 ? 1 : hp > 33 ? 2 : hp > 0 ? 3 : 4);
+
+/** Set boss health without attack effects (live sync, joins, reloads). */
+function setHp(value, { quiet = false } = {}) {
+    S.hp = clamp(value, 0, 100);
+    if (S.hp < 0.01) S.hp = 0;
+    const phase = phaseFor(S.hp);
+    if (phase === 4) { if (!S.defeated) victory(); }
+    else if (phase > S.phase && !quiet) phaseBreak(phase);
+    else S.phase = phase;
+    updateBossHud();
+}
+
+// ---------------------------------------------------------------------------
+// Live mode: real participants from js/state.js (Supabase broadcast + localStorage)
+const STORAGE_KEY_LIVE = 'gamified_workshop_state';
+const live = { known: new Map(), pending: 0, target: 100, lastJson: '', started: false };
+
+function readWorkshopState() {
+    try {
+        // eslint-disable-next-line no-undef
+        if (typeof WorkshopState !== 'undefined') return WorkshopState.get();
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_LIVE) || '{"participants":[]}');
+    } catch {
+        return { participants: [] };
+    }
+}
+
+// Participants don't pick a class or theme colour yet, so derive a stable one from the
+// username. If the participant record ever carries `cls` / `themeColor`, those win.
+function lookFor(p, id) {
+    let h = 0;
+    for (let i = 0; i < id.length; i++) h = (Math.imul(h, 31) + id.charCodeAt(i)) >>> 0;
+    const cls = CLASSES[p.cls] ? p.cls : CLASS_KEYS[h % CLASS_KEYS.length];
+    const color = typeof p.themeColor === 'number' ? p.themeColor : THEME_COLORS[(h >>> 4) % THEME_COLORS.length];
+    return { cls, color };
+}
+
+const repoLabel = (url) => {
+    const m = String(url || '').match(/github\.com\/([\w.-]+\/[\w.-]+)/i);
+    return m ? m[1].replace(/\.git$/, '') : '';
+};
+
+function syncLive(initial = false) {
+    const state = readWorkshopState();
+    const json = JSON.stringify(state.participants || []);
+    if (!initial && json === live.lastJson) return;
+    live.lastJson = json;
+
+    const people = (state.participants || []).filter((p) => p && p.username);
+    const n = people.length;
+    const perQuest = n ? 100 / (n * 5) : 0;
+    const passed = people.reduce((a, p) => a + clamp(p.currentQuest | 0, 0, 5), 0);
+    live.target = n ? 100 * (1 - passed / (n * 5)) : 100;
+
+    const seen = new Set();
+    const hits = [];
+    let joined = 0;
+    for (const p of people) {
+        const id = String(p.username).toLowerCase();
+        seen.add(id);
+        const quest = clamp(p.currentQuest | 0, 0, 5);
+        let r = findRaider(id);
+        if (!r) {
+            const look = lookFor(p, id);
+            r = addRaider({ id, name: p.displayName || p.username, cls: look.cls, color: look.color, stage: initial ? quest : 0 }, !initial);
+            if (initial) r.spawnDelay = 0.4 + S.raiders.length * 0.05;
+            else joined++;
+            live.known.set(id, initial ? quest : 0);
+        }
+        r.xp = p.xp | 0;
+        const had = live.known.get(id) ?? 0;
+        for (let q = had + 1; q <= quest; q++) hits.push({ r, q, repo: repoLabel(p.submissions?.[q]?.url) });
+        if (quest < had) { r.stage = quest; r.bot.setStage(quest, false); } // progress was reset
+        live.known.set(id, quest);
+    }
+    for (const r of [...S.raiders]) if (!seen.has(r.id)) { removeRaider(r); live.known.delete(r.id); }
+
+    if (initial) {
+        hits.length = 0;
+        S.phase = phaseFor(live.target);
+        setHp(live.target, { quiet: true });
+        relayout(true);
+        return;
+    }
+
+    // Boss health before this batch of hits lands. Joins make the boss stronger.
+    const before = live.target + hits.length * perQuest;
+    if (S.defeated && live.target > 0) {
+        later(3, () => { resetRaid(false); setHp(live.target, { quiet: true }); bossLaugh('Fresh code to corrupt! I RETURN!'); });
+    } else if (Math.abs(before - S.hp) > 0.01 && live.pending === 0) {
+        const grew = before > S.hp + 0.01;
+        setHp(before, { quiet: true });
+        if (grew && joined) {
+            hud.feed(`<b>Glitch Overlord</b> grew stronger: ${joined} new raider${joined > 1 ? 's' : ''} means more code to corrupt`, 'phase');
+            if (Math.random() < 0.6) bossLaugh(pick(['More victims? Excellent.', 'Fresh code to corrupt!', 'Another one joins? Mwahaha!']));
+        }
+    }
+    if (!n) { resetRaid(false); setHp(100, { quiet: true }); hud.banner('WAITING FOR RAIDERS', 'Join from participant.html to enter the arena', 'phase', 3); }
+
+    hits.forEach(({ r, q, repo }, i) => {
+        live.pending++;
+        later(0.3 + i * 0.7, () => {
+            const st = STAGES[q];
+            raiderEvent('lab', r, {
+                dmg: perQuest, repo,
+                title: 'CRITICAL HIT',
+                note: `<b>${escapeHtml(r.name)}</b> passed <i>${st.module}</i>${repo ? ` · <code>${escapeHtml(repo)}</code>` : ''}`,
+                onLand: () => {
+                    live.pending = Math.max(0, live.pending - 1);
+                    if (!live.pending && !S.defeated && Math.abs(S.hp - live.target) > 0.01) setHp(live.target);
+                },
+            });
+        });
+    });
+}
+
+function startLive() {
+    syncLive(true);
+    live.started = true;
+    window.addEventListener('workshopStateChanged', () => syncLive());
+    window.addEventListener('storage', (e) => { if (e.key === STORAGE_KEY_LIVE) syncLive(); });
+    setInterval(() => syncLive(), 3000); // safety net if an event is missed
+    const n = S.raiders.length;
+    later(0.6, () => hud.banner(n ? 'RAID IN PROGRESS' : 'WAITING FOR RAIDERS',
+        n ? `<b>${n}</b> raider${n > 1 ? 's' : ''} connected · every quest you pass hits the boss` : 'Join from participant.html to enter the arena', 'phase', 3));
+    hud.feed(`<b>Live raid.</b> Boss health is the cohort's real quest progress`, 'info');
+    later(1.6, () => bossLaugh(n ? 'Another cohort? Your code will crumble.' : 'No raiders? Then I win by default.'));
+}
+
 // ---------------------------------------------------------------------------
 // Combat
 function bossTarget() {
@@ -235,10 +377,13 @@ function raiderEvent(type, raider, opts = {}) {
         mult = opts.mult ?? pick([1.5, 2, 2, 2.5]);
         dmg *= mult;
     }
-    if (S.rage > 0) dmg *= 2;
+    // Live mode passes the boss's real share for this quest, so the bar always matches progress.
+    const exact = opts.dmg != null;
+    if (exact) { dmg = opts.dmg; mult = 1; }
+    if (S.rage > 0 && !exact) dmg *= 2;
 
     let blocked = false;
-    if (S.shield) {
+    if (S.shield && !exact) {
         if (type === 'quiz') {
             S.shield.have++;
             hud.setShield(S.shield);
@@ -246,7 +391,7 @@ function raiderEvent(type, raider, opts = {}) {
         } else if (type === 'lab' || type === 'lesson') blocked = true;
     }
 
-    raider.xp += XP[type] + (crit ? Math.round(mult * 20) : 0);
+    if (!exact) raider.xp += XP[type] + (crit ? Math.round(mult * 20) : 0);
     if (type === 'help') raider.helps++;
 
     bot.attack();
@@ -264,16 +409,19 @@ function raiderEvent(type, raider, opts = {}) {
             hud.damage(at, 'BLOCKED', 'blocked');
             particles.burst(at, { count: 25, speed: 7, color: C(0x93c5fd, 2.5), size: 0.35, life: 0.5 });
             sfx.blocked();
+            if (Math.random() < 0.5) bossLaugh(pick(['Blocked! Mwahaha!', 'My firewall holds!', 'Quizzes first, little bots.']));
         } else {
-            applyDamage(dmg, raider, { crit, at, type, mult, tag });
+            applyDamage(dmg, raider, { crit, at, type, mult, tag, title: opts.title, note: opts.note });
         }
         if (type === 'lab') stageUp(raider, opts);
+        opts.onLand?.();
     });
 }
 
-function applyDamage(dmg, raider, { crit = false, at = bossPos, type = 'quiz', mult = 1, tag = '' } = {}) {
+function applyDamage(dmg, raider, { crit = false, at = bossPos, type = 'quiz', mult = 1, tag = '', title = null, note = null } = {}) {
     if (S.defeated) return;
     S.hp = Math.max(0, S.hp - dmg);
+    if (S.hp < 0.01) S.hp = 0;
     if (raider) {
         raider.dmg += dmg;
         if (crit) raider.crits++;
@@ -289,7 +437,7 @@ function applyDamage(dmg, raider, { crit = false, at = bossPos, type = 'quiz', m
         S.glitch = Math.min(1, S.glitch + 0.6);
         if (raider) {
             const sideNote = mult >= 2.5 ? ' · Lighthouse 96' : '';
-            hud.banner(`CRITICAL ×${mult}`, `<b>${escapeHtml(raider.name)}</b> verified a lab · commit <code>${randomCommit()}</code>${sideNote}`, 'crit', 2.4);
+            hud.banner(title || `CRITICAL ×${mult}`, note || `<b>${escapeHtml(raider.name)}</b> verified a lab · commit <code>${randomCommit()}</code>${sideNote}`, 'crit', 2.4);
             cheerAround(raider, 3);
         }
     }
@@ -329,7 +477,9 @@ function stageUp(raider, opts) {
     }
     sfx.levelUp();
     const st = STAGES[raider.stage];
-    hud.feed(`<b>${escapeHtml(raider.name)}</b> verified <i>${st.module}</i> and assembled <b>${st.part}</b> · <code>${opts.commit || randomCommit()}</code>`, 'lab');
+    // Live submissions record the repo, not a commit, so never invent a hash for real students.
+    const ref = opts.repo ? escapeHtml(opts.repo) : opts.dmg != null ? '' : opts.commit || randomCommit();
+    hud.feed(`<b>${escapeHtml(raider.name)}</b> verified <i>${st.module}</i> and assembled <b>${st.part}</b>${ref ? ` · <code>${ref}</code>` : ''}`, 'lab');
 }
 
 function cheerAround(raider, n) {
@@ -347,7 +497,7 @@ function phaseBreak(phase) {
     S.glitch = 1;
     particles.burst(bossPos, { count: 220, speed: 18, color: C(0xff2e88, 2.6), size: 0.6, life: 1.4, grav: 8 });
     S.raiders.forEach((r, i) => r.bot.cheer(0.3 + (i % 6) * 0.08));
-    later(0.9, () => taunt(PHASE_TAUNTS[phase]));
+    later(0.9, () => bossLaugh(PHASE_TAUNTS[phase]));
     hud.feed(`<b>Glitch Overlord</b> entered ${PHASES[phase]}`, 'phase');
     if (demo && phase === 2 && !S.shieldUsed) later(3.5, () => raiseShield(6));
 }
@@ -383,14 +533,30 @@ function startRage(secs = 45) {
 function taunt(line) {
     if (S.defeated) return;
     const text = line || pick(TAUNTS);
+    // Most taunts end in a laugh; it weakens as the boss loses health.
+    if (Math.random() < 0.6) return bossLaugh(text);
     boss.taunt(2.6);
     hud.bubble('boss', () => boss.mouthWorld(new THREE.Vector3()), text, 'boss', 3.4);
     sfx.taunt();
 }
 
+const laughText = (h) => (h > 0.66 ? 'MWAHAHAHAHA!' : h > 0.33 ? 'Mwahaha… ha!' : h > 0.12 ? 'Heh… heh…' : 'h-heh…?');
+
+/** Evil laugh: louder, longer and deeper at full health; fading and glitchy near defeat. */
+function bossLaugh(line = '') {
+    if (S.defeated) return;
+    const h = S.hp / 100;
+    const dur = sfx.laugh(h) || 1.2 + h * 1.4;
+    boss.taunt(dur);
+    boss.laugh(dur, h);
+    const text = line ? `${line} ${laughText(h)}` : laughText(h);
+    hud.bubble('boss', () => boss.mouthWorld(new THREE.Vector3()), text, 'boss', Math.max(2.6, dur + 0.8));
+    if (h > 0.5) director.shake(0.12 * h);
+}
+
 function shockwave() {
     if (S.defeated) return;
-    taunt('GLITCH PULSE!');
+    bossLaugh('GLITCH PULSE!');
     boss.hit(0.5);
     sfx.shock();
     director.shake(0.35);
@@ -444,24 +610,32 @@ function victory() {
     boss.defeat();
     director.victory();
     director.shake(1);
-    sfx.victory();
+    sfx.laugh(0, { dying: true });
+    hud.bubble('boss', () => bossPos.clone().add(new THREE.Vector3(0, -2, 4)), 'h-heh… ha… h—', 'boss', 2);
+    later(1.9, () => sfx.victory());
     S.glitch = 1;
     particles.burst(bossPos, { count: 600, speed: 26, color: C(0xfbbf24, 2.6), size: 0.7, life: 2.2, grav: 9 });
     hud.banner('GLITCH OVERLORD DEFEATED', 'Sector restored · ARIA is free', 'victory', 5);
     hud.feed('<b>Victory!</b> The cohort defeated the Glitch Overlord', 'victory');
     S.raiders.forEach((r, i) => r.bot.cheer(0.2 + (i % 8) * 0.1));
     const by = (k) => [...S.raiders].sort((a, b) => b[k] - a[k])[0];
-    const mvp = by('dmg'), crit = by('crits'), helper = by('helps');
+    const mvp = by(LIVE ? 'xp' : 'dmg'), crit = by('crits'), helper = by('helps');
+    const n = S.raiders.length;
     later(3.2, () => {
-        hud.victory([
+        if (!mvp) return;
+        hud.victory(LIVE ? [
+            { award: 'MVP · Most XP', name: mvp.name, color: mvp.color, stat: `${mvp.xp.toLocaleString()} XP` },
+            { award: 'Critical striker', name: crit.name, color: crit.color, stat: `${crit.crits} quest${crit.crits === 1 ? '' : 's'} passed live` },
+            { award: 'The cohort', name: `${n} raider${n === 1 ? '' : 's'}`, color: 0xfbbf24, stat: `${n * 5} quests passed` },
+        ] : [
             { award: 'MVP · Most damage', name: mvp.name, color: mvp.color, stat: `${Math.round(mvp.dmg * HP_UNIT).toLocaleString()} dmg` },
             { award: 'Critical striker', name: crit.name, color: crit.color, stat: `${crit.crits} verified lab${crit.crits === 1 ? '' : 's'}` },
             { award: 'Top helper', name: helper.name, color: helper.color, stat: `${helper.helps} peer${helper.helps === 1 ? '' : 's'} helped` },
         ]);
-        hud.bubble('aria', () => bossPos.clone().add(new THREE.Vector3(0, 5.5, 2)), 'Thank you, raiders. Let\'s build something good. ✨', 'aria', 6);
+        hud.bubble('aria', () => bossPos.clone().add(new THREE.Vector3(4.2, 1.6, 2)), 'Thank you, raiders. Let\'s build something good. ✨', 'aria', 6);
     });
     updateBossHud();
-    if (demo) later(24, () => resetRaid(true));
+    if (demo) later(24, () => { resetRaid(true); later(0.5, () => bossLaugh('You thought you could delete me?')); });
 }
 
 function resetRaid(reroll = false) {
@@ -488,9 +662,18 @@ function resetRaid(reroll = false) {
 // ---------------------------------------------------------------------------
 // Demo simulation
 const sched = { event: 2.5, taunt: 7, shock: 26, chat: 5, ambush: 55, join: 40 };
+// Boss and bot personality runs in both live and demo modes.
+function ambientTick(dt) {
+    if (S.defeated) return;
+    const k = demo ? speed : 1;
+    sched.taunt -= dt * k; sched.shock -= dt * k; sched.chat -= dt * k;
+    if (sched.taunt <= 0) { sched.taunt = (demo ? 12 : 22) + Math.random() * 8; taunt(S.raiders.length ? null : 'No raiders? Then I win by default.'); }
+    if (sched.shock <= 0) { sched.shock = (demo ? 28 : 55) + Math.random() * 15; if (S.raiders.length) shockwave(); }
+    if (sched.chat <= 0) { sched.chat = 6 + Math.random() * 5; botChat(); }
+}
 function demoTick(dt) {
     if (!demo || S.defeated || !S.raiders.length) return;
-    for (const k in sched) sched[k] -= dt * speed;
+    for (const k of ['event', 'ambush', 'join']) sched[k] -= dt * speed;
     if (sched.event <= 0) {
         sched.event = 0.7 + Math.random() * 1.5;
         const x = Math.random();
@@ -502,9 +685,6 @@ function demoTick(dt) {
         else if (x < 0.6) raiderEvent('quiz', r);
         else raiderEvent('lesson', r);
     }
-    if (sched.taunt <= 0) { sched.taunt = 12 + Math.random() * 6; taunt(); }
-    if (sched.shock <= 0) { sched.shock = 28 + Math.random() * 10; shockwave(); }
-    if (sched.chat <= 0) { sched.chat = 6 + Math.random() * 5; botChat(); }
     if (sched.ambush <= 0) { sched.ambush = 70 + Math.random() * 20; startAmbush(); }
     if (sched.join <= 0 && S.raiders.length < 60) {
         sched.join = 45 + Math.random() * 30;
@@ -516,7 +696,13 @@ function demoTick(dt) {
 // ---------------------------------------------------------------------------
 // Remote control (arena-control.html) over BroadcastChannel
 const bus = 'BroadcastChannel' in window ? new BroadcastChannel('glitch-arena') : null;
+// In live mode progress only comes from real submissions, so the simulated actions are off.
+const LIVE_BLOCKED = new Set(['lesson', 'quiz', 'lab', 'help', 'join', 'defeat', 'rage', 'shield', 'ambush', 'demo', 'speed']);
 function command(m) {
+    if (LIVE && LIVE_BLOCKED.has(m.type)) {
+        hud.banner('LIVE RAID', 'Progress comes from verified quest submissions. Use <code>?demo=1</code> to rehearse.', 'info', 2.2);
+        return;
+    }
     const target = () => {
         const named = m.raider && findRaider(m.raider);
         if (named) return named;
@@ -531,7 +717,10 @@ function command(m) {
         case 'shield': raiseShield(m.need || 6); break;
         case 'ambush': startAmbush(); break;
         case 'defeat': applyDamage(S.hp + 1, null, { crit: true }); break;
-        case 'reset': resetRaid(!!m.reroll); break;
+        case 'reset':
+            resetRaid(!!m.reroll && !LIVE);
+            if (LIVE) { live.lastJson = ''; setHp(live.target, { quiet: true }); }
+            break;
         case 'demo': demo = !!m.on; break;
         case 'speed': speed = clamp(m.value, 0.25, 4); break;
         case 'join': {
@@ -544,7 +733,7 @@ function command(m) {
 if (bus) bus.onmessage = (e) => command(e.data || {});
 function postStatus() {
     bus?.postMessage({
-        type: 'status', hp: S.hp, phase: PHASES[S.phase], combo: S.combo, demo, speed,
+        type: 'status', mode: LIVE ? 'live' : 'demo', hp: S.hp, phase: PHASES[S.phase], combo: S.combo, demo, speed,
         shield: S.shield, rage: Math.ceil(S.rage),
         raiders: S.raiders.map((r) => ({ id: r.id, name: r.name, stage: r.stage, cls: r.cls })),
     });
@@ -558,9 +747,10 @@ window.addEventListener('keydown', (e) => {
     if (VIEW === 'lineup') return lineupKey(k);
     const map = {
         ' ': () => command({ type: 'lab' }), q: () => command({ type: 'quiz' }), l: () => command({ type: 'lesson' }),
-        j: () => command({ type: 'help' }), b: shockwave, t: () => taunt(), g: () => startRage(30), s: () => raiseShield(6),
-        a: () => startAmbush(), d: () => command({ type: 'defeat' }), r: () => resetRaid(false), n: () => command({ type: 'join' }),
-        p: () => { demo = !demo; hud.banner(demo ? 'DEMO ON' : 'DEMO PAUSED', '', 'info', 1.2); },
+        j: () => command({ type: 'help' }), b: () => command({ type: 'shockwave' }), t: () => command({ type: 'taunt' }),
+        g: () => command({ type: 'rage', secs: 30 }), s: () => command({ type: 'shield' }), a: () => command({ type: 'ambush' }),
+        d: () => command({ type: 'defeat' }), r: () => command({ type: 'reset' }), n: () => command({ type: 'join' }),
+        p: () => { if (LIVE) return command({ type: 'demo' }); demo = !demo; hud.banner(demo ? 'DEMO ON' : 'DEMO PAUSED', '', 'info', 1.2); },
         m: toggleSound, h: () => document.getElementById('help').classList.toggle('show'),
     };
     if (map[k]) { e.preventDefault(); map[k](); }
@@ -617,14 +807,18 @@ if (VIEW === 'lineup') {
     env.dais.visible = false;
     lineupBuild();
 } else {
-    seedCohort();
-    updateBossHud();
+    document.body.classList.add(LIVE ? 'live' : 'demo');
     hud.board([]);
-    hud.feed('<b>Raid initialised.</b> Verified work damages the Glitch Overlord', 'info');
+    if (LIVE) startLive();
+    else {
+        seedCohort();
+        updateBossHud();
+        hud.feed('<b>Demo raid.</b> Simulated cohort, not real student progress', 'info');
+        later(0.6, () => hud.banner('RAID INITIALISED', `<b>${S.raiders.length}</b> raiders connected · defeat the Glitch Overlord together`, 'phase', 3));
+        later(1.6, () => bossLaugh('Another cohort? Your code will crumble.'));
+    }
     const join = `${location.origin}${location.pathname.replace(/arena(\.html)?$/, '')}participant.html`;
     document.getElementById('join-url').textContent = join.replace(/^https?:\/\//, '');
-    later(0.6, () => hud.banner('RAID INITIALISED', `<b>${S.raiders.length}</b> raiders connected · defeat the Glitch Overlord together`, 'phase', 3));
-    later(1.6, () => taunt('Another cohort? Your code will crumble.'));
 }
 
 window.addEventListener('resize', () => {
@@ -659,6 +853,7 @@ function tick(raw) {
 
     if (VIEW === 'arena') {
         demoTick(dt);
+        ambientTick(dt);
         if (S.comboT > 0) S.comboT -= dt;
         if (S.rage > 0) { S.rage = Math.max(0, S.rage - dt); hud.setRage(S.rage); }
         if (S.ambush) { S.ambush.t -= dt; if (S.ambush.t <= 0) resolveAmbush(); }
@@ -723,4 +918,4 @@ function tick(raw) {
 requestAnimationFrame(frame);
 
 // Test hook: advance the simulation without waiting for real frames (used for screenshots).
-window.__arena = { step(seconds, dt = 1 / 30) { for (let t = 0; t < seconds; t += dt) tick(dt); }, command, state: S };
+window.__arena = { step(seconds, dt = 1 / 30) { for (let t = 0; t < seconds; t += dt) tick(dt); }, command, state: S, live, sync: () => syncLive() };

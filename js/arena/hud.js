@@ -128,6 +128,8 @@ export class Hud {
             this.bubbles.set(id, b);
         }
         b.getWorld = getWorld;
+        b.side = kind === 'boss' || kind === 'aria';
+        b.el.classList.toggle('side', b.side);
         b.el.textContent = text;
         b.el.classList.add('show');
         b.until = performance.now() + dur * 1000;
@@ -166,7 +168,10 @@ export class Hud {
         for (const [id, b] of this.bubbles) {
             if (now > b.until) { b.el.classList.remove('show'); continue; }
             const s = this.project(b.getWorld());
-            b.el.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -100%)`;
+            // The boss talks from the side of its face so it never collides with centre banners.
+            b.el.style.transform = b.side
+                ? `translate(${s.x}px, ${s.y}px) translate(0, -50%)`
+                : `translate(${s.x}px, ${s.y}px) translate(-50%, -100%)`;
             b.el.style.display = s.on ? '' : 'none';
         }
     }

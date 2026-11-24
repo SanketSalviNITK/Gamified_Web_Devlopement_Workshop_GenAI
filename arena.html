@@ -122,6 +122,12 @@
         #join { right: calc(var(--u) * 1.2); bottom: calc(var(--u) * 1.2); padding: calc(var(--u) * 0.9) calc(var(--u) * 1.1); text-align: right; }
         #join .count { font-size: calc(var(--u) * 2.4); font-weight: 700; line-height: 1; color: var(--cyan); text-shadow: 0 0 18px rgba(34,211,238,0.6); }
         #join .count small { font-size: 0.38em; color: var(--muted); letter-spacing: 0.15em; margin-left: 0.4em; }
+        .mode-badge { display: inline-block; margin-right: 0.6em; padding: 0.1em 0.5em; border-radius: 4px; font-weight: 700; letter-spacing: 0.12em; }
+        body.live .mode-badge { background: rgba(52, 211, 153, 0.18); color: var(--green); }
+        body.live .mode-badge::before { content: '● LIVE'; }
+        body.demo .mode-badge { background: rgba(251, 191, 36, 0.15); color: var(--gold); }
+        body.demo .mode-badge::before { content: 'DEMO'; }
+        body.live .demo-only { display: none; }
         #join-url { font-family: var(--mono); font-size: calc(var(--u) * 0.95); color: #fff; margin-top: 0.4rem; }
 
         /* ---------- banner ---------- */
@@ -183,6 +189,8 @@
         }
         .bubble::after { content: ''; position: absolute; left: 50%; bottom: -7px; width: 12px; height: 12px; background: inherit; border: inherit; border-top: 0; border-left: 0; transform: translateX(-50%) rotate(45deg); }
         .bubble.show { opacity: 1; }
+        .bubble.side { margin-top: 0; }
+        .bubble.side::after { left: -7px; top: 50%; bottom: auto; transform: translateY(-50%) rotate(135deg); }
         .bubble.boss { border-color: var(--corrupt); color: #ffd1e6; font-family: var(--mono); font-size: calc(var(--u) * 1.05); max-width: 420px; box-shadow: 0 0 30px rgba(255, 46, 136, 0.4); }
         .bubble.aria { border-color: var(--gold); color: #fef3c7; font-size: calc(var(--u) * 1.1); max-width: 440px; box-shadow: 0 0 30px rgba(251, 191, 36, 0.4); }
 
@@ -239,6 +247,8 @@
         #help dl { display: grid; grid-template-columns: auto 1fr; gap: 0.45rem 1rem; font-size: 0.95rem; }
         #help dt { font-family: var(--mono); color: var(--cyan); }
         #help dd { color: #cbd5e1; }
+        #help .live-note { margin: 0 0 1rem; color: #cbd5e1; }
+        body.demo #help .live-note { display: none; }
         #help p { margin-top: 1rem; font-size: 0.85rem; color: var(--muted); }
         #help a { color: var(--cyan); }
         #help-close { margin-top: 1rem; padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid var(--panel-edge); background: rgba(255,255,255,0.06); color: var(--text); font: inherit; cursor: pointer; }
@@ -294,7 +304,7 @@
     <section id="feed" class="hud arena-only"><ul id="feed-list"></ul></section>
 
     <section id="join" class="hud panel arena-only">
-        <div class="eyebrow">Join the raid</div>
+        <div class="eyebrow"><span id="mode-badge" class="mode-badge"></span>Join the raid</div>
         <div class="count"><span id="join-count">0</span><small>ONLINE</small></div>
         <div id="join-url"></div>
     </section>
@@ -330,22 +340,25 @@
     <div id="help" role="dialog" aria-label="Instructor controls">
         <div class="panel">
             <h2>Instructor controls</h2>
+            <p class="live-note">This is the <b>live raid</b>: each participant from <code>participant.html</code> is a bot, and each quest they pass is a critical hit. Boss health is the cohort's real progress. Open <a href="arena.html?demo=1">arena.html?demo=1</a> to rehearse with a simulated cohort.</p>
             <dl>
-                <dt>Space</dt><dd>Verified lab (critical hit + bot part)</dd>
-                <dt>Q / L / J</dt><dd>Quiz pass / lesson / peer help</dd>
-                <dt>A</dt><dd>Ambush quiz</dd>
-                <dt>G</dt><dd>Rage mode (×2 damage)</dd>
-                <dt>S</dt><dd>Shield phase (quizzes break it)</dd>
+                <dt>M</dt><dd>Sound on/off (the boss laughs; weaker as it loses health)</dd>
                 <dt>B / T</dt><dd>Boss shockwave / taunt</dd>
-                <dt>N</dt><dd>New raider joins</dd>
-                <dt>D / R</dt><dd>Defeat boss / reset raid</dd>
-                <dt>P / M</dt><dd>Pause demo / sound</dd>
+                <dt>R</dt><dd>Re-sync with real progress</dd>
+                <dt class="demo-only">Space</dt><dd class="demo-only">Verified lab (critical hit + bot part)</dd>
+                <dt class="demo-only">Q / L / J</dt><dd class="demo-only">Quiz pass / lesson / peer help</dd>
+                <dt class="demo-only">A / G / S</dt><dd class="demo-only">Ambush quiz / rage mode / shield phase</dd>
+                <dt class="demo-only">N / D</dt><dd class="demo-only">New raider joins / defeat boss</dd>
+                <dt class="demo-only">P</dt><dd class="demo-only">Pause simulation</dd>
             </dl>
             <p>Open <a href="arena-control.html" target="_blank" rel="noopener">arena-control.html</a> on another screen to run the raid as a game master. Add <code>?view=lineup</code> to see every bot stage side by side.</p>
             <button id="help-close" type="button">Close</button>
         </div>
     </div>
 
+    <!-- Real participant progress: the same shared state engine as participant.html and admin.html -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/state.js"></script>
     <script type="importmap">
     {
         "imports": {

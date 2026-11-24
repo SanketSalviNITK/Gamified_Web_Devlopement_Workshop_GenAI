@@ -78,17 +78,27 @@ This project contains a `vercel.json` file for routing and security headers.
 
 ---
 
-## ⚔️ Glitch Arena (prototype projector view)
+## ⚔️ Glitch Arena (new projector view)
 
-`arena.html` is a redesigned projector view, built entirely with Three.js: every bot, the boss, the arena and all effects are procedural, with no external 3D models. It runs alongside the original `admin.html` and does not yet read real participant progress.
+`arena.html` is a redesigned projector view, built entirely with Three.js: every bot, the boss, the arena and all effects are procedural, with no external 3D models. It runs alongside the original `admin.html`.
 
-* **Bots that assemble part by part:** Stasis Pod → Power Core (M1) → Chassis in the student's portfolio colour (M2) → Holo Wings (M3) → Avatar Head (M4) → Voice Core (M5). Proportions, eyes and antenna are derived from the username, and the class (Architect, Engineer, Promptsmith) adds drones, a cannon arm or orbiting glyphs.
-* **The Glitch Overlord:** armour plates break off as its health falls, it reacts to hits and taunts the room, and on defeat it shatters to free ARIA.
-* **Raid mechanics:** critical hits for verified labs, cohort combos, three boss phases, shield phases broken by quiz passes, rage mode, ambush quizzes, shockwaves, a victory screen with MVPs.
-* **Camera director, bloom and glitch post-processing,** a floor that heals from corrupted pink to cyan as the boss weakens, and synthesised sound (off until you press M or the speaker button).
+**Live by default.** The arena reads the same shared state as `participant.html` and `admin.html` (`js/state.js`, synced over Supabase Realtime, or through localStorage between tabs of one browser):
+* Every registered participant becomes a bot, starting in a stasis pod.
+* Every quest they pass is a critical hit that bolts on the next part. The banner and feed name the student, the module and the submitted repository.
+* Boss health is the cohort's real progress: 100% minus quests passed out of 5 per participant (the same formula as `admin.html`). A new participant joining makes the boss stronger.
+* When every participant has passed all five quests, the boss is defeated.
+* A participant's class and bot colour are derived from their username until the participant page lets them choose.
+
+**Features**
+* **Bots that assemble part by part:** Stasis Pod → Power Core (M1) → Chassis in the student's colour (M2) → Holo Wings (M3) → Avatar Head (M4) → Voice Core (M5). Proportions, eyes and antenna come from the username, and the class (Architect, Engineer, Promptsmith) adds drones, a cannon arm or orbiting glyphs.
+* **The Glitch Overlord:** armour plates break off as its health falls (and grow back if new raiders make it stronger), it reacts to hits, taunts the room, and shatters to free ARIA when defeated.
+* **An evil laugh that fades with its health:** a synthesised robotic "MWAHAHAHA" with a booming echo at full health, shorter and stuttering by half health, a weak "heh… heh?" near the end, and a final broken laugh on defeat. The boss throws its head back and shakes as it laughs.
+* **Raid presentation:** camera swoops to the bot that lands a critical hit, phase breaks, cohort combos, a floor that heals from corrupted pink to cyan, bloom and glitch effects, and a victory screen with honours.
+* Sound is off until you press **M** or the speaker button (browsers block autoplay).
 
 **Try it** (`node server.js`, then):
-* `http://localhost:3000/arena.html` runs a simulated 24-student raid. Press `H` for instructor shortcuts.
+* `http://localhost:3000/arena.html` is the live raid. Register and submit quests in `participant.html` (another tab works for local testing). Press `H` for instructor shortcuts.
+* `arena.html?demo=1` runs a simulated 24-student raid for rehearsals, with extra mechanics that need course features not built yet: quiz-breakable shields, rage mode, ambush quizzes.
 * `arena.html?view=lineup` shows one bot at every stage side by side (`C` changes class, `K` changes colour).
-* `arena-control.html` is a game-master remote. It currently talks to the arena over `BroadcastChannel`, so it must be open in the same browser as the arena.
-* Options: `?demo=0` (no simulation), `?n=40` (cohort size), `?speed=2`, `?motion=reduced` (no camera swoops, shake or heavy glitching; also follows the OS reduced-motion setting).
+* `arena-control.html` is a game-master remote (taunt, shockwave, re-sync; all actions in demo mode). It talks to the arena over `BroadcastChannel`, so it must be open in the same browser.
+* Options: `?n=40` and `?speed=2` (demo only), `?motion=reduced` (no camera swoops, shake or heavy glitching; also follows the OS reduced-motion setting).
