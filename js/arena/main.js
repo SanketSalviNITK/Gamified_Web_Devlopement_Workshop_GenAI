@@ -784,13 +784,31 @@ window.addEventListener('keydown', (e) => {
     if (map[k]) { e.preventDefault(); map[k](); }
 });
 
+// Browsers only allow audio after the visitor interacts with the page, so sound starts off.
+// The first click or key press anywhere turns it on (unless the speaker button was used),
+// and the boss laughs straight away so it's obvious that sound works.
 const soundBtn = document.getElementById('sound');
-function toggleSound() {
-    if (sfx.enabled) sfx.disable(); else sfx.enable();
+let soundChosen = false;
+function setSound(on) {
+    if (on) sfx.enable(); else sfx.disable();
     soundBtn.classList.toggle('on', sfx.enabled);
     soundBtn.setAttribute('aria-pressed', String(sfx.enabled));
+    document.body.classList.toggle('sound-on', sfx.enabled);
+    if (sfx.enabled && VIEW === 'arena' && !S.defeated) later(0.2, () => bossLaugh(S.raiders.length ? 'You dare turn up the volume?' : 'Finally, an audience.'));
+}
+function toggleSound() {
+    soundChosen = true;
+    setSound(!sfx.enabled);
 }
 soundBtn.addEventListener('click', toggleSound);
+const firstGesture = (e) => {
+    if (soundChosen || (e.target && e.target.closest && e.target.closest('#sound'))) return;
+    if (e.type === 'keydown' && e.key.toLowerCase() === 'm') return; // M toggles on its own
+    soundChosen = true;
+    setSound(true);
+};
+window.addEventListener('pointerdown', firstGesture, true);
+window.addEventListener('keydown', firstGesture, true);
 document.getElementById('help-close').addEventListener('click', () => document.getElementById('help').classList.remove('show'));
 
 // ---------------------------------------------------------------------------
