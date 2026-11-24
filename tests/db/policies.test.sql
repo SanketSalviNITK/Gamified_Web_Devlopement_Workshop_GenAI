@@ -14,17 +14,34 @@ grant execute on function public._expect(text, boolean), public._expect_denied(t
 
 -- 1. GitHub sign-ups create profiles
 insert into auth.users values
-  ('00000000-0000-0000-0000-00000000000a', '{"user_name":"ana-dev","provider_id":"1001","full_name":"Ana"}'),
-  ('00000000-0000-0000-0000-00000000000b', '{"user_name":"ben","provider_id":"1002"}'),
-  ('00000000-0000-0000-0000-00000000000c', '{"user_name":"ana-dev","provider_id":"1003"}');
+  ('00000000-0000-0000-0000-00000000000a', '{"user_name":"ana-dev","provider_id":"1001","full_name":"Ana"}', '{"provider":"github"}'),
+  ('00000000-0000-0000-0000-00000000000b', '{"user_name":"ben","provider_id":"1002"}', '{"provider":"github"}'),
+  ('00000000-0000-0000-0000-00000000000c', '{"user_name":"ana-dev","provider_id":"1003"}', '{"provider":"github"}'),
+  -- An email sign-up that writes someone else's GitHub identity into its own metadata.
+  ('00000000-0000-0000-0000-00000000000d', '{"user_name":"victim-dev","provider_id":"4242","full_name":"Victim"}', '{"provider":"email"}');
 select public._expect('profile created from GitHub metadata', (select github_login = 'ana-dev' and github_id = 1001 and display_name = 'Ana' from public.profiles where id = '00000000-0000-0000-0000-00000000000a'));
 select public._expect('display name falls back to login', (select display_name = 'ben' from public.profiles where id = '00000000-0000-0000-0000-00000000000b'));
 select public._expect('duplicate login does not block sign-up', (select github_login like 'ana-dev-%' from public.profiles where id = '00000000-0000-0000-0000-00000000000c'));
+-- GitHub sign-up where Supabase only records the provider after creating the user:
+-- the identity row (written from GitHub's own answer) must still link the profile.
+insert into auth.users values ('00000000-0000-0000-0000-00000000000e', '{}', '{"provider":"email"}');
+insert into auth.identities (user_id, provider, provider_id, identity_data)
+values ('00000000-0000-0000-0000-00000000000e', 'github', '5005', '{"user_name":"late-gh","full_name":"Late Linker"}');
+select public._expect('GitHub identity row links the profile', (select github_login = 'late-gh' and github_id = 5005 and display_name = 'Late Linker' from public.profiles where id = '00000000-0000-0000-0000-00000000000e'));
+-- The impostor adds an email identity: still not linked.
+insert into auth.identities (user_id, provider, provider_id, identity_data)
+values ('00000000-0000-0000-0000-00000000000d', 'email', '00000000-0000-0000-0000-00000000000d', '{"user_name":"victim-dev","provider_id":"4242"}');
+-- Linking a GitHub account that already belongs to someone else is ignored.
+insert into auth.users values ('00000000-0000-0000-0000-00000000000f', '{}', '{"provider":"email"}');
+insert into auth.identities (user_id, provider, provider_id, identity_data)
+values ('00000000-0000-0000-0000-00000000000f', 'github', '1001', '{"user_name":"ana-dev"}');
+select public._expect('a GitHub account cannot be linked to two profiles', (select github_id is null from public.profiles where id = '00000000-0000-0000-0000-00000000000f'));
+select public._expect('email sign-up cannot claim a GitHub identity', (select github_login like 'raider-%' and github_id is null and display_name = 'Raider' from public.profiles where id = '00000000-0000-0000-0000-00000000000d'));
 insert into public.cohorts (code, title, is_open) values ('closed-one', 'Closed', false);
 
 -- 2. Anonymous visitors (the projector)
 set role anon;
-select public._expect('anon can read profiles', (select count(*) = 3 from public.profiles));
+select public._expect('anon can read profiles', (select count(*) = 6 from public.profiles));
 select public._expect('anon can call raid_roster', (select count(*) = 0 from public.raid_roster('workshop')));
 select public._expect_denied('anon cannot insert a pass', $q$insert into public.quest_passes values ('00000000-0000-0000-0000-00000000000a', 1, 'x/y', 'abc')$q$);
 select public._expect_denied('anon cannot edit profiles', $q$update public.profiles set display_name = 'hax'$q$);

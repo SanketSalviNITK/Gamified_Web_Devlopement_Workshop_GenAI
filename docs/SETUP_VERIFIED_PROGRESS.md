@@ -40,6 +40,8 @@ It also creates the default cohort `workshop`, the `raid_roster()` function the 
 
 GitHub shares the student's username, name and email address with the project. Nothing is posted to their account.
 
+Recommended: in **Authentication → Sign In / Providers → Email**, turn email sign-in off. Students only need GitHub. (Even with it on, an email account can't claim a GitHub identity: profiles get their GitHub login and id only from the GitHub identity record Supabase writes at GitHub sign-in, and the verifier matches repositories by that GitHub id.)
+
 ## 3. Deploy the verifier
 
 ```bash
@@ -84,7 +86,7 @@ Instructors can read every student's submissions (including prompts), manage coh
 
 ## What the verifier checks
 
-Every quest: the repository is public, it belongs to the signed-in student (matched by GitHub account id, so renamed accounts still work), and its latest commit is newer than the student's enrolment (quest 1) or previous quest pass (quests 2-5), with 10 minutes' grace.
+Every quest: the repository is public, it belongs to the signed-in student (matched only by the GitHub account id recorded at GitHub sign-in, so renamed accounts still work and usernames alone are never trusted), and its latest commit is newer than the student's enrolment (quest 1) or previous quest pass (quests 2-5), with 10 minutes' grace.
 
 | Quest | Checks |
 |---|---|
@@ -108,4 +110,4 @@ node --test tests/*.test.mjs
 PGHOST=localhost PGUSER=postgres tests/db/run.sh
 ```
 
-The first runs the verifier against sample repositories served by a fake GitHub. The second applies the migration to a scratch database (with a small stand-in for Supabase's `auth` schema) and checks 36 security and behaviour rules: who can read and write what, quest order, and re-verification. Both also run in GitHub Actions on every push.
+The first runs the verifier against sample repositories served by a fake GitHub. The second applies the migration to a scratch database (with a small stand-in for Supabase's `auth` schema) and checks 39 security and behaviour rules: who can read and write what, quest order, and re-verification. Both also run in GitHub Actions on every push.

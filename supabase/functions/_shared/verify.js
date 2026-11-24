@@ -38,11 +38,16 @@ export async function verifySubmission({ quest, repoInput, profile, workSince, s
         ? fail('public', 'Repository is public', 'Make the repository public (Settings → General → Danger Zone → Change visibility) so it can be verified.')
         : ok('public', 'Repository is public'));
 
-    const ownsById = profile.github_id != null && Number(snap.repo.ownerId) === Number(profile.github_id);
-    const ownsByLogin = profile.github_id == null && snap.repo.ownerLogin.toLowerCase() === String(profile.github_login).toLowerCase();
-    identity.push(ownsById || ownsByLogin
-        ? ok('owner', 'Repository belongs to you', `Owned by @${snap.repo.ownerLogin}.`)
-        : fail('owner', 'Repository belongs to you', `Submit a repository from your own GitHub account (@${profile.github_login}). This one belongs to @${snap.repo.ownerLogin}.`));
+    // Ownership is matched only by the numeric GitHub account id recorded at GitHub sign-in.
+    // Usernames are never trusted on their own (accounts without a GitHub id cannot pass).
+    if (profile.github_id == null) {
+        identity.push(fail('owner', 'Repository belongs to you', 'Your account is not linked to GitHub. Sign out and sign in with GitHub, then submit again.'));
+    } else {
+        const owns = Number(snap.repo.ownerId) === Number(profile.github_id);
+        identity.push(owns
+            ? ok('owner', 'Repository belongs to you', `Owned by @${snap.repo.ownerLogin}.`)
+            : fail('owner', 'Repository belongs to you', `Submit a repository from your own GitHub account (@${profile.github_login}). This one belongs to @${snap.repo.ownerLogin}.`));
+    }
 
     const since = new Date(workSince).getTime();
     const committed = snap.commit.date ? new Date(snap.commit.date).getTime() : NaN;

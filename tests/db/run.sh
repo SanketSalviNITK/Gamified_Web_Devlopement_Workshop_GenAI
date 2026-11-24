@@ -10,5 +10,10 @@ psql -q -X -v ON_ERROR_STOP=1 -d "$db" -f "$here/supabase_stub.sql" >/dev/null
 # Applied twice on purpose: the migration must be safe to re-run.
 psql -q -X -v ON_ERROR_STOP=1 -d "$db" -f "$here/../../supabase/migrations/20261124000000_verified_raid.sql" >/dev/null 2>&1
 psql -q -X -v ON_ERROR_STOP=1 -d "$db" -f "$here/../../supabase/migrations/20261124000000_verified_raid.sql" >/dev/null 2>&1
+# Later migrations, in order.
+for m in "$here"/../../supabase/migrations/*.sql; do
+    case "$m" in *20261124000000_verified_raid.sql) continue ;; esac
+    psql -q -X -v ON_ERROR_STOP=1 -d "$db" -f "$m" >/dev/null 2>&1
+done
 psql -q -X -t -A -v ON_ERROR_STOP=1 -d "$db" -f "$here/policies.test.sql" | tee /tmp/raid_db_test.out
 ! grep -q '^FAIL' /tmp/raid_db_test.out

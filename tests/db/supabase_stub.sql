@@ -7,7 +7,8 @@ do $$ begin
     if not exists (select 1 from pg_roles where rolname = 'service_role') then create role service_role nologin bypassrls; end if;
 end $$;
 create schema auth;
-create table auth.users (id uuid primary key, raw_user_meta_data jsonb);
+create table auth.users (id uuid primary key, raw_user_meta_data jsonb, raw_app_meta_data jsonb);
+create table auth.identities (id uuid primary key default gen_random_uuid(), user_id uuid not null references auth.users (id) on delete cascade, provider text not null, provider_id text not null, identity_data jsonb);
 create function auth.uid() returns uuid language sql stable
     as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 grant usage on schema public, auth to anon, authenticated, service_role;

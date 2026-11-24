@@ -143,6 +143,13 @@ test('identity: GitHub id is used, so a renamed account still matches', async ()
     assert.equal(r.passed, true);
 });
 
+test('identity: an account without a GitHub id can never pass, even with a matching username', async () => {
+    const r = await run(1, {}, { profile: { github_login: 'ana-dev', github_id: null } });
+    assert.equal(r.passed, false);
+    assert.deepEqual(failed(r), ['owner']);
+    assert.match(r.checks.find((c) => c.id === 'owner').hint, /Sign out and sign in with GitHub/);
+});
+
 test('identity: private and missing repositories are rejected with guidance', async () => {
     assert.deepEqual(failed(await run(1, { priv: true })), ['public']);
     const missing = await run(1, { missing: true });
