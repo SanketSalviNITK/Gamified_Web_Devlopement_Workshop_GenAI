@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raid Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07060f; --panel: #0f0d1d; --edge: rgba(255,255,255,0.09); --text: #eef2ff; --muted: #8f93b8;
+            --corrupt: #ff2e88; --cyan: #22d3ee; --gold: #fbbf24; --green: #34d399; --blue: #93c5fd;
+            --display: 'Chakra Petch', system-ui, sans-serif; --mono: 'JetBrains Mono', ui-monospace, monospace;
+        }
+        @media (prefers-color-scheme: light) {
+            :root:not([data-theme="dark"]) { --bg: #f4f4fb; --panel: #ffffff; --edge: rgba(15,13,29,0.12); --text: #15132b; --muted: #5c5f80; }
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); color: var(--text); font-family: var(--display); padding: 16px; max-width: 980px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; margin: 8px 0 16px; flex-wrap: wrap; }
+        h1 { font-size: 1.5rem; letter-spacing: 0.05em; }
+        h1 span { color: var(--corrupt); }
+        .sub { color: var(--muted); font-size: 0.9rem; }
+        .link { font-family: var(--mono); font-size: 0.8rem; color: var(--cyan); }
+        .status { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .stat { background: var(--panel); border: 1px solid var(--edge); border-radius: 12px; padding: 12px 14px; }
+        .stat .k { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+        .stat .v { font-size: 1.5rem; font-weight: 700; margin-top: 2px; }
+        .bar { height: 6px; border-radius: 3px; background: var(--edge); margin-top: 8px; overflow: hidden; }
+        .bar i { display: block; height: 100%; background: var(--corrupt); width: 100%; transition: width 0.3s; }
+        #offline { display: none; padding: 10px 14px; border-radius: 10px; border: 1px dashed var(--corrupt); color: var(--corrupt); margin-bottom: 16px; font-size: 0.9rem; }
+        #offline.show { display: block; }
+        #live-note { display: none; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--green); color: var(--green); margin-bottom: 16px; font-size: 0.9rem; }
+        body.live #live-note { display: block; }
+        button:disabled { opacity: 0.35; cursor: not-allowed; }
+        label:has(input:disabled) { opacity: 0.4; }
+        section { background: var(--panel); border: 1px solid var(--edge); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+        section h2 { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+        button {
+            font: inherit; font-weight: 600; text-align: left; cursor: pointer; color: var(--text);
+            background: color-mix(in srgb, var(--c, var(--cyan)) 12%, transparent);
+            border: 1px solid color-mix(in srgb, var(--c, var(--cyan)) 55%, transparent);
+            border-radius: 10px; padding: 12px 14px; min-height: 64px; transition: transform 0.08s, background 0.2s;
+        }
+        button:hover { background: color-mix(in srgb, var(--c, var(--cyan)) 22%, transparent); }
+        button:active { transform: scale(0.97); }
+        button small { display: block; font-family: var(--mono); font-weight: 400; font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+        .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+        select, input[type=range] { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--edge); border-radius: 8px; padding: 8px 10px; }
+        label { font-size: 0.9rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+        .danger { --c: var(--corrupt); }
+        .gold { --c: var(--gold); }
+        .green { --c: var(--green); }
+        .blue { --c: var(--blue); }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>RAID <span>CONTROL</span></h1>
+            <p class="sub">Game-master remote for the Glitch Arena. Open the arena on the projector in this same browser.</p>
+        </div>
+        <a class="link" href="arena.html" target="_blank" rel="noopener">Open arena ↗</a>
+    </header>
+
+    <div id="live-note">● <b>Live raid.</b> Bots and boss health follow real quest submissions, so the simulated actions are switched off. Open the arena with <code>?demo=1</code> to rehearse with them.</div>
+    <div id="offline">No arena detected. Open <a class="link" href="arena.html" target="_blank" rel="noopener">arena.html</a> in another tab or window of this browser.</div>
+
+    <div class="status">
+        <div class="stat"><div class="k">Boss HP</div><div class="v" id="hp">–</div><div class="bar"><i id="hp-bar"></i></div></div>
+        <div class="stat"><div class="k">Phase</div><div class="v" id="phase" style="font-size:1rem">–</div></div>
+        <div class="stat"><div class="k">Raiders</div><div class="v" id="count">–</div></div>
+        <div class="stat"><div class="k">Combo</div><div class="v" id="combo">–</div></div>
+    </div>
+
+    <section>
+        <h2>Raider actions</h2>
+        <div class="row">
+            <label>Raider <select id="raider"><option value="">Random</option></select></label>
+        </div>
+        <div class="grid">
+            <button class="gold" data-cmd="lab">Verified lab<small>Critical hit · bolts on next part</small></button>
+            <button data-cmd="quiz">Quiz passed<small>Medium hit · breaks shields</small></button>
+            <button class="blue" data-cmd="lesson">Lesson finished<small>Small hit</small></button>
+            <button class="green" data-cmd="help">Helped a peer<small>Support hit</small></button>
+            <button class="green" data-cmd="join">New raider joins<small>Stasis pod appears</small></button>
+        </div>
+    </section>
+
+    <section>
+        <h2>Live events</h2>
+        <div class="grid">
+            <button class="danger" data-cmd="ambush">Ambush quiz<small>Timed question on every screen</small></button>
+            <button class="danger" data-cmd="rage">Rage mode<small>×2 damage for 45 s</small></button>
+            <button class="blue" data-cmd="shield">Shield phase<small>Labs blocked until 6 quiz passes</small></button>
+            <button class="danger" data-cmd="shockwave">Boss shockwave<small>Glitch pulse across the arena</small></button>
+            <button class="danger" data-cmd="taunt">Boss taunt<small>Random beginner-mistake jab</small></button>
+        </div>
+    </section>
+
+    <section>
+        <h2>Raid</h2>
+        <div class="row">
+            <label><input type="checkbox" id="demo"> Simulate cohort activity</label>
+            <label>Speed <input type="range" id="speed" min="0.25" max="3" step="0.25" value="1"> <span id="speed-v">1×</span></label>
+        </div>
+        <div class="grid">
+            <button class="gold" data-cmd="defeat">Final blow<small>Defeat the boss now</small></button>
+            <button data-cmd="reset">Reset raid<small>Demo: full HP · Live: re-sync with progress</small></button>
+        </div>
+    </section>
+
+    <script>
+        const bus = 'BroadcastChannel' in window ? new BroadcastChannel('glitch-arena') : null;
+        const $ = (id) => document.getElementById(id);
+        const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        let lastSeen = 0;
+        let roster = '';
+
+        document.querySelectorAll('button[data-cmd]').forEach((b) => b.addEventListener('click', () => {
+            const msg = { type: b.dataset.cmd };
+            const r = $('raider').value;
+            if (r) msg.raider = r;
+            bus?.postMessage(msg);
+        }));
+        $('demo').addEventListener('change', (e) => bus?.postMessage({ type: 'demo', on: e.target.checked }));
+        $('speed').addEventListener('input', (e) => {
+            $('speed-v').textContent = `${e.target.value}×`;
+            bus?.postMessage({ type: 'speed', value: parseFloat(e.target.value) });
+        });
+
+        if (bus) bus.onmessage = (e) => {
+            const s = e.data;
+            if (s?.type !== 'status') return;
+            lastSeen = Date.now();
+            const isLive = s.mode === 'live';
+            document.body.classList.toggle('live', isLive);
+            document.querySelectorAll('button[data-cmd]').forEach((b) => {
+                b.disabled = isLive && !['taunt', 'shockwave', 'reset'].includes(b.dataset.cmd);
+            });
+            $('demo').disabled = isLive;
+            $('speed').disabled = isLive;
+            $('hp').textContent = `${Math.ceil(s.hp)}%`;
+            $('hp-bar').style.width = `${s.hp}%`;
+            $('phase').textContent = s.phase;
+            $('count').textContent = s.raiders.length;
+            $('combo').textContent = s.combo >= 3 ? `×${s.combo}` : '–';
+            if (document.activeElement !== $('demo')) $('demo').checked = s.demo;
+            const key = s.raiders.map((r) => r.id + r.stage).join();
+            if (key !== roster) {
+                roster = key;
+                const sel = $('raider');
+                const keep = sel.value;
+                sel.innerHTML = '<option value="">Random</option>' + s.raiders
+                    .map((r) => `<option value="${esc(r.id)}">${esc(r.name)} · stage ${r.stage}</option>`).join('');
+                sel.value = keep;
+            }
+        };
+        setInterval(() => $('offline').classList.toggle('show', Date.now() - lastSeen > 2000), 1000);
+    </script>
+</body>
+</html>

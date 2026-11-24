@@ -312,26 +312,66 @@
             padding: 0;
             color: #fff;
         }
+        /* ---------- verified sign-in & results ---------- */
+        .cohort-line { text-align: center; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px; }
+        .cohort-line code { color: var(--neon-cyan); font-family: var(--font-code); }
+        .gh-btn { width: 100%; padding: 14px; font-size: 1rem; }
+        .fine-print { margin-top: 14px; font-size: 0.78rem; color: var(--text-secondary); text-align: center; line-height: 1.5; }
+        .auth-error { margin-top: 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.5); background: rgba(239,68,68,0.08); color: #fca5a5; font-size: 0.85rem; }
+        .bot-custom { margin-top: 24px; text-align: left; display: grid; gap: 8px; }
+        .bot-custom select { width: 100%; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.35); color: var(--text-primary); border: 1px solid var(--card-border); font: inherit; }
+        .mini-label { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--font-code); }
+        .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+        .swatch { width: 28px; height: 28px; border-radius: 8px; border: 2px solid transparent; background: var(--c); cursor: pointer; box-shadow: 0 0 10px color-mix(in srgb, var(--c) 50%, transparent); }
+        .swatch.on { border-color: #fff; }
+        .check-preview { margin-bottom: 20px; padding: 14px 16px; border-radius: 12px; background: rgba(6,182,212,0.06); border: 1px solid rgba(6,182,212,0.25); }
+        .check-preview h4 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--neon-cyan); margin-bottom: 8px; }
+        .check-preview ul { list-style: none; display: grid; gap: 4px; font-size: 0.85rem; color: var(--text-secondary); }
+        .check-preview li::before { content: '○ '; color: var(--neon-cyan); }
+        .check-list { list-style: none; display: grid; gap: 8px; margin-top: 10px; }
+        .check-item { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; font-family: var(--font-body); font-size: 0.9rem; }
+        .check-item .mark { font-weight: 700; }
+        .check-item.pass .mark { color: var(--neon-green); }
+        .check-item.fail .mark { color: #f87171; }
+        .check-item .detail { display: block; color: var(--text-secondary); font-size: 0.8rem; }
+        .check-item .hint { display: block; color: #fcd34d; font-size: 0.82rem; margin-top: 2px; }
+        .verdict { font-family: var(--font-body); font-weight: 600; margin-bottom: 4px; }
+        .verdict.pass { color: var(--neon-green); }
+        .verdict.fail { color: #fca5a5; }
     </style>
 </head>
 <body>
-    <!-- 1. Username Registration Overlay -->
+    <!-- 1. Sign-in Overlay -->
     <div id="register-overlay" class="overlay">
         <div class="glass-panel register-box">
-            <h2 class="text-neon-cyan" style="font-size:1.8rem; margin-bottom:8px; text-align:center;">INITIATE PROFILE</h2>
-            <p style="color:var(--text-secondary); text-align:center; font-size:0.9rem; margin-bottom:32px;">Initialize your cybernetic avatar profile node to connect with the assembly mainframe.</p>
-            
-            <form id="register-form" onsubmit="registerUser(event)">
-                <div class="form-group">
-                    <label for="reg-username">GitHub Username</label>
-                    <input type="text" id="reg-username" required placeholder="e.g. SanketSalvi">
-                </div>
-                <div class="form-group">
-                    <label for="reg-display">Display Nickname</label>
-                    <input type="text" id="reg-display" placeholder="e.g. Sanket">
-                </div>
-                <button type="submit" class="btn-cyber" style="width:100%; padding:14px; font-size:1rem;">CONNECT MAINBOARD</button>
-            </form>
+            <h2 class="text-neon-cyan" style="font-size:1.8rem; margin-bottom:8px; text-align:center;">JOIN THE RAID</h2>
+            <div id="auth-loading" style="color:var(--text-secondary); text-align:center; font-size:0.9rem;">Connecting to the mainframe…</div>
+
+            <div id="auth-github" style="display:none;">
+                <p style="color:var(--text-secondary); text-align:center; font-size:0.95rem; margin-bottom:20px;">
+                    Sign in with GitHub so the verifier can confirm that the repositories you submit are really yours.
+                </p>
+                <p class="cohort-line">Cohort <code id="cohort-label">workshop</code></p>
+                <button id="github-btn" type="button" class="btn-cyber gh-btn" onclick="signInWithGitHub()">Sign in with GitHub</button>
+                <p class="fine-print">GitHub shares your username, name and email address with this workshop. Nothing is posted to your GitHub account.</p>
+                <div id="auth-error" class="auth-error" role="alert" style="display:none;"></div>
+            </div>
+
+            <div id="legacy-register" style="display:none;">
+                <p style="color:var(--text-secondary); text-align:center; font-size:0.9rem; margin-bottom:24px;">Initialize your cybernetic avatar profile node to connect with the assembly mainframe.</p>
+                <p class="auth-error" style="margin-bottom:20px;">Verified progress is not set up yet (database migration missing), so submissions are not checked.</p>
+                <form id="register-form" onsubmit="registerUser(event)">
+                    <div class="form-group">
+                        <label for="reg-username">GitHub Username</label>
+                        <input type="text" id="reg-username" required placeholder="e.g. SanketSalvi">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-display">Display Nickname</label>
+                        <input type="text" id="reg-display" placeholder="e.g. Sanket">
+                    </div>
+                    <button type="submit" class="btn-cyber" style="width:100%; padding:14px; font-size:1rem;">CONNECT MAINBOARD</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -342,7 +382,10 @@
                 <h1 class="text-neon-cyan" style="font-size:2rem; font-weight:800;">PARTICIPANT DECK</h1>
                 <p style="color:var(--text-secondary); font-size:0.9rem;">Cybernetic Assembly Mainframe</p>
             </div>
-            <button class="btn-cyber" onclick="location.href='index.html'" style="padding:10px 18px; background:transparent; border:1px solid rgba(255,255,255,0.15); box-shadow:none;">Exit Deck</button>
+            <div style="display:flex; gap:10px;">
+                <button id="sign-out" class="btn-cyber" onclick="signOut()" style="display:none; padding:10px 18px; background:transparent; border:1px solid rgba(255,255,255,0.15); box-shadow:none;">Sign out</button>
+                <button class="btn-cyber" onclick="location.href='index.html'" style="padding:10px 18px; background:transparent; border:1px solid rgba(255,255,255,0.15); box-shadow:none;">Exit Deck</button>
+            </div>
         </header>
 
         <div class="dashboard-grid">
@@ -374,6 +417,19 @@
                             <div class="badge-icon" id="badge-5" title="Cognition Core (Quest 5)">🧠</div>
                         </div>
                     </div>
+
+                    <div id="bot-custom" class="bot-custom" style="display:none;">
+                        <h4 class="badge-shelf-title">Your raid bot</h4>
+                        <label for="bot-class" class="mini-label">Class</label>
+                        <select id="bot-class">
+                            <option value="architect">◆ Architect · shield drones</option>
+                            <option value="engineer">▲ Engineer · cannon arm</option>
+                            <option value="promptsmith">✦ Promptsmith · code glyphs</option>
+                        </select>
+                        <span class="mini-label">Chassis colour</span>
+                        <div id="bot-colors" class="swatches"></div>
+                        <div id="bot-saved" class="mini-label" aria-live="polite"></div>
+                    </div>
                 </div>
             </aside>
 
@@ -396,6 +452,8 @@
                 <form id="submission-form" onsubmit="processSubmission(event)">
                     <input type="hidden" id="quest-id-field">
                     
+                    <div id="check-preview" class="check-preview" style="display:none;"></div>
+
                     <div class="form-group">
                         <label for="sub-repourl">GitHub Repository URL</label>
                         <input type="url" id="sub-repourl" required placeholder="https://github.com/username/repository-name">
@@ -459,25 +517,204 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/state.js"></script>
     <script src="js/evaluator.js"></script>
+    <!-- The same quest rules the server runs, so students can see what will be checked. -->
+    <script type="module">
+        import { RULES } from './supabase/functions/_shared/checks.js';
+        window.QUEST_RULES = RULES;
+    </script>
     <script>
-        let currentParticipant = null;
+        let currentParticipant = null;   // legacy mode (before the database is set up)
+        let me = null;                   // verified mode: { user, profile, passes, subs }
+        const sb = WorkshopState.client;
+        const THEME_COLORS = [0x22d3ee, 0x34d399, 0xf472b6, 0xfacc15, 0x818cf8, 0xfb923c, 0x2dd4bf, 0xe879f9];
+        const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const xpFor = (n) => QUESTS.filter((q) => q.id <= n).reduce((sum, q) => sum + q.xp, 0);
+        const verified = () => WorkshopState.mode === 'database';
 
-        // Check if username already exists in LocalStorage
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
+            await WorkshopState.ready;
+            document.getElementById('auth-loading').style.display = 'none';
+            if (verified()) startVerified();
+            else startLegacy();
+        });
+
+        // ------------------------------------------------------------ verified mode
+        async function startVerified() {
+            document.getElementById('auth-github').style.display = '';
+            document.getElementById('cohort-label').textContent = WorkshopState.cohort;
+            sb.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') location.reload(); });
+            const { data: { session } } = await sb.auth.getSession();
+            if (session) return enterDeck(session.user);
+            // Until the instructor has switched on GitHub sign-in in Supabase, say so instead of offering a button that errors.
+            if (!(await githubSignInEnabled())) {
+                document.getElementById('github-btn').style.display = 'none';
+                showAuthError('Sign-in opens soon: your instructor is finishing the setup. Please check back in a few minutes.');
+            }
+        }
+
+        async function githubSignInEnabled() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/auth/v1/settings`, { headers: { apikey: SUPABASE_KEY } });
+                if (!res.ok) return true; // can't tell: let the button try
+                const settings = await res.json();
+                return !!(settings.external && settings.external.github);
+            } catch {
+                return true;
+            }
+        }
+
+        function showAuthError(message) {
+            const el = document.getElementById('auth-error');
+            el.textContent = message;
+            el.style.display = '';
+            document.getElementById('register-overlay').style.display = 'flex';
+        }
+
+        async function signInWithGitHub() {
+            const btn = document.getElementById('github-btn');
+            btn.disabled = true;
+            btn.textContent = 'Opening GitHub…';
+            const { error } = await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: location.href.split('#')[0] } });
+            if (error) {
+                btn.disabled = false;
+                btn.textContent = 'Sign in with GitHub';
+                showAuthError(error.message);
+            }
+        }
+
+        async function signOut() {
+            await sb.auth.signOut();
+            location.reload();
+        }
+
+        async function enterDeck(user) {
+            // Join this cohort (does nothing if already enrolled).
+            const { error } = await sb.from('enrollments')
+                .upsert({ user_id: user.id, cohort_code: WorkshopState.cohort }, { onConflict: 'user_id,cohort_code', ignoreDuplicates: true });
+            if (error) return showAuthError(`Could not join the cohort "${WorkshopState.cohort}". It may be closed or misspelled. (${error.message})`);
+            document.getElementById('register-overlay').style.display = 'none';
+            document.getElementById('sign-out').style.display = '';
+            await loadMe(user);
+        }
+
+        async function loadMe(user = me && me.user) {
+            const [{ data: profile, error }, { data: passes }, { data: subs }] = await Promise.all([
+                sb.from('profiles').select('id, github_login, display_name, bot_class, theme_color').eq('id', user.id).single(),
+                sb.from('quest_passes').select('quest_id, repo, commit_sha, passed_at').eq('user_id', user.id),
+                sb.from('submissions').select('quest_id, repo, ai_tool, prompt, passed, created_at').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50),
+            ]);
+            if (error || !profile) return showAuthError('Your profile could not be loaded. Sign out and sign in with GitHub again.');
+            me = { user, profile, passes: new Map((passes || []).map((p) => [p.quest_id, p])), subs: subs || [] };
+            const quest = me.passes.size; // quests can only be passed in order
+            renderProfile({ displayName: profile.display_name, line: `@${profile.github_login} · verified with GitHub`, currentQuest: quest, xp: xpFor(quest) });
+            renderCustomiser();
+            renderQuestsList(quest);
+        }
+
+        function renderCustomiser() {
+            document.getElementById('bot-custom').style.display = '';
+            document.getElementById('bot-class').value = me.profile.bot_class;
+            document.getElementById('bot-colors').innerHTML = THEME_COLORS.map((c) => {
+                const hex = '#' + c.toString(16).padStart(6, '0');
+                return `<button type="button" class="swatch${me.profile.theme_color === c ? ' on' : ''}" style="--c:${hex}" data-c="${c}" aria-label="Chassis colour ${hex}" aria-pressed="${me.profile.theme_color === c}"></button>`;
+            }).join('');
+        }
+
+        async function saveBot(patch) {
+            const { error } = await sb.from('profiles').update(patch).eq('id', me.user.id);
+            document.getElementById('bot-saved').textContent = error ? `Not saved: ${error.message}` : 'Saved · your bot updates on the projector';
+            if (!error) { Object.assign(me.profile, patch); renderCustomiser(); }
+        }
+        document.getElementById('bot-class').addEventListener('change', (e) => saveBot({ bot_class: e.target.value }));
+        document.getElementById('bot-colors').addEventListener('click', (e) => {
+            const b = e.target.closest('.swatch');
+            if (b) saveBot({ theme_color: Number(b.dataset.c) });
+        });
+
+        async function verifiedSubmission(questId, repoUrl, tool, promptText) {
+            const box = document.getElementById('evaluator-console');
+            const btn = document.getElementById('submit-btn');
+            box.style.display = 'block';
+            box.innerHTML = '<div class="console-line">> Fetching your repository from GitHub and running the quest checks…</div>';
+            btn.disabled = true;
+            btn.innerText = 'VERIFYING…';
+
+            const { data, error } = await sb.functions.invoke('verify-quest', { body: { quest: Number(questId), repo: repoUrl, tool, prompt: promptText } });
+            let result = data;
+            if (error) {
+                try { result = await error.context.json(); }
+                catch { result = { error: 'network', message: 'Could not reach the verifier. Check your connection and try again.' }; }
+            }
+            box.innerHTML = renderResult(Number(questId), result || {});
+            box.scrollTop = 0;
+            btn.disabled = false;
+            btn.innerText = 'VERIFY AGAIN';
+            if (result && result.passed) await loadMe();
+        }
+
+        function renderResult(quest, r) {
+            const messages = {
+                not_signed_in: 'Your session expired. Sign out and sign in with GitHub again.',
+                not_enrolled: 'Join a cohort before submitting quests.',
+                locked: 'Finish the earlier quests first.',
+                rate_limited: 'Too many attempts this hour. Take a short break and try again.',
+                github_busy: 'GitHub is busy right now. Try again in a few minutes.',
+            };
+            let html = '';
+            if (r.passed) {
+                const sha = r.commit && r.commit.sha ? r.commit.sha.slice(0, 7) : '';
+                html += `<div class="verdict pass">✅ Quest ${quest} verified at commit ${esc(sha)}. Your bot just gained its next part on the projector!</div>`;
+            } else if (r.checks && r.checks.length) {
+                const ok = r.checks.filter((c) => c.pass).length;
+                html += `<div class="verdict fail">❌ ${ok} of ${r.checks.length} checks passed. Fix the items marked below, push to GitHub, then verify again.</div>`;
+            } else {
+                html += `<div class="verdict fail">❌ ${esc(r.message || messages[r.error] || 'Verification failed. Try again.')}</div>`;
+            }
+            if (r.checks) {
+                html += '<ul class="check-list">' + r.checks.map((c) => `
+                    <li class="check-item ${c.pass ? 'pass' : 'fail'}">
+                        <span class="mark">${c.pass ? '✓' : '✗'}</span>
+                        <span>${esc(c.label)}${c.detail ? `<span class="detail">${esc(c.detail)}</span>` : ''}${!c.pass && c.hint ? `<span class="hint">${esc(c.hint)}</span>` : ''}</span>
+                    </li>`).join('') + '</ul>';
+            }
+            return html;
+        }
+
+        function renderCheckPreview(questId) {
+            const box = document.getElementById('check-preview');
+            const rules = (window.QUEST_RULES || {})[questId];
+            if (!verified() || !rules) { box.style.display = 'none'; return; }
+            const identity = ['Repository is public and belongs to you', questId === 1 ? 'Committed after you joined' : 'New commits since your last quest'];
+            box.innerHTML = `<h4>What the verifier checks</h4><ul>${[...identity, ...rules.map((r) => r.label)].map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`;
+            box.style.display = '';
+        }
+
+        // ------------------------------------------------------------ shared rendering
+        function renderProfile({ displayName, line, currentQuest, xp }) {
+            document.getElementById('user-display').innerText = displayName;
+            document.getElementById('user-git').innerText = line;
+            document.getElementById('user-level').innerText = Math.max(1, currentQuest);
+            document.getElementById('user-xp').innerText = xp;
+            const emojis = ['🌱', '🔌', '🛡️', '🌐', '🤖', '🧠'];
+            document.getElementById('avatar-emoji').innerText = emojis[currentQuest] || '🌱';
+            for (let i = 1; i <= 5; i++) document.getElementById(`badge-${i}`).classList.toggle('unlocked', currentQuest >= i);
+        }
+
+        // ------------------------------------------------------------ legacy mode (no database yet)
+        function startLegacy() {
+            document.getElementById('legacy-register').style.display = '';
             const activeUser = localStorage.getItem('active_participant_username');
             if (activeUser) {
                 document.getElementById('register-overlay').style.display = 'none';
                 loadParticipantData(activeUser);
             }
-        });
+        }
 
         function registerUser(e) {
             e.preventDefault();
             const username = document.getElementById('reg-username').value.trim();
             const display = document.getElementById('reg-display').value.trim() || username;
-
             if (!username) return;
-
             const res = WorkshopState.addParticipant(username, display);
             if (res.success || res.error === 'Username already registered.') {
                 localStorage.setItem('active_participant_username', username);
@@ -489,40 +726,13 @@
         }
 
         function loadParticipantData(username) {
-            const state = WorkshopState.get();
-            let p = state.participants.find(x => x.username.toLowerCase() === username.toLowerCase());
-            
-            // If they registered but aren't found in current state (e.g. state reset), re-inject them
+            let p = WorkshopState.get().participants.find((x) => x.username.toLowerCase() === username.toLowerCase());
             if (!p) {
                 WorkshopState.addParticipant(username, username);
-                p = WorkshopState.get().participants.find(x => x.username.toLowerCase() === username.toLowerCase());
+                p = WorkshopState.get().participants.find((x) => x.username.toLowerCase() === username.toLowerCase());
             }
-
             currentParticipant = p;
-
-            // Render Profile Card
-            document.getElementById('user-display').innerText = p.displayName;
-            document.getElementById('user-git').innerText = `@${p.username} | Bot: ${p.botName || 'No-Bot'}`;
-            
-            const level = Math.max(1, p.currentQuest);
-            document.getElementById('user-level').innerText = level;
-            document.getElementById('user-xp').innerText = p.xp;
-
-            // Update Avatar Emoji matching quest progression
-            const emojis = ['🌱', '🔌', '🛡️', '🌐', '🤖', '🧠'];
-            document.getElementById('avatar-emoji').innerText = emojis[p.currentQuest] || '🌱';
-
-            // Render Badges
-            for (let i = 1; i <= 5; i++) {
-                const bEl = document.getElementById(`badge-${i}`);
-                if (p.currentQuest >= i) {
-                    bEl.classList.add('unlocked');
-                } else {
-                    bEl.classList.remove('unlocked');
-                }
-            }
-
-            // Render Quests list
+            renderProfile({ displayName: p.displayName, line: `@${p.username} | Bot: ${p.botName || 'No-Bot'}`, currentQuest: p.currentQuest, xp: p.xp });
             renderQuestsList(p.currentQuest);
         }
 
@@ -540,7 +750,7 @@
                 if (currentQuestId >= q.id) {
                     statusClass = 'completed';
                     statusText = '✅ Capsule Synced';
-                    actionBtn = intelBtn + `<button class="btn-cyber" onclick="openSubmitModal(${q.id})" style="background:transparent; border: 1px solid var(--neon-green); color: var(--neon-green); box-shadow:none; padding:8px 14px;">Re-eval Code</button>`;
+                    actionBtn = intelBtn + `<button class="btn-cyber" onclick="openSubmitModal(${q.id})" style="background:transparent; border: 1px solid var(--neon-green); color: var(--neon-green); box-shadow:none; padding:8px 14px;">${verified() ? 'Re-verify' : 'Re-eval Code'}</button>`;
                 } else if (currentQuestId === q.id - 1) {
                     statusClass = 'active';
                     statusText = '⚡ Core Ready';
@@ -570,34 +780,45 @@
             switch(id) {
                 case 1: return 'Boot up your capsule! Establish repository branches, structure files, and trigger your first push to GitHub.';
                 case 2: return 'Materialize your outer shell. Prompt your AI companion to code a beautiful glassmorphic portfolio site.';
-                case 3: return 'Project a 3D hologram. Render custom objects and scenes in the browser using Three.js / Model-Viewer.';
+                case 3: return 'Project a 3D hologram. Render an animated Three.js object as a fixed background behind your portfolio.';
                 case 4: return 'Synthesize your structural clone. Integrate an interactive, custom GLB Ready Player Me avatar.';
-                case 5: return 'Awaken the cognitive core. Integrate a local client smalltalk logic chatbot with speaking synthesizers.';
+                case 5: return 'Awaken the cognitive core. Add a chatbot fixed to the bottom-right corner that answers with regex keyword matching.';
                 default: return '';
             }
         }
 
         // Modal triggers
         function openSubmitModal(questId) {
-            const quest = QUESTS.find(q => q.id === questId);
+            const quest = QUESTS.find((q) => q.id === questId);
             document.getElementById('quest-id-field').value = questId;
             document.getElementById('modal-title').innerText = `Submit Mission ${questId}: ${quest.name}`;
             document.getElementById('modal-xp').innerText = `+${quest.xp} XP`;
-            
-            // Pre-fill existing submission if completed
-            if (currentParticipant && currentParticipant.submissions[questId]) {
+            const repoEl = document.getElementById('sub-repourl');
+            const toolEl = document.getElementById('sub-tool');
+            const promptEl = document.getElementById('sub-prompt');
+            repoEl.value = '';
+            promptEl.value = '';
+
+            if (verified() && me) {
+                // Most students build every quest in the same repository, so suggest the last one used.
+                const last = me.subs.find((s) => s.quest_id === questId) || me.subs[0];
+                const repo = (me.passes.get(questId) || {}).repo || (last && last.repo) || (me.passes.get(questId - 1) || {}).repo;
+                if (repo) repoEl.value = `https://github.com/${repo}`;
+                if (last && last.quest_id === questId) {
+                    if (last.ai_tool) toolEl.value = last.ai_tool;
+                    promptEl.value = last.prompt || '';
+                }
+            } else if (currentParticipant && currentParticipant.submissions[questId]) {
                 const sub = currentParticipant.submissions[questId];
-                document.getElementById('sub-repourl').value = sub.url;
-                document.getElementById('sub-tool').value = sub.tool;
-                document.getElementById('sub-prompt').value = sub.prompt;
-            } else {
-                document.getElementById('sub-repourl').value = '';
-                document.getElementById('sub-prompt').value = '';
+                repoEl.value = sub.url;
+                toolEl.value = sub.tool;
+                promptEl.value = sub.prompt;
             }
 
+            renderCheckPreview(questId);
             document.getElementById('evaluator-console').style.display = 'none';
             document.getElementById('submit-btn').disabled = false;
-            document.getElementById('submit-btn').innerText = 'RUN AI EVALUATOR';
+            document.getElementById('submit-btn').innerText = verified() ? 'VERIFY ON GITHUB' : 'RUN AI EVALUATOR';
             document.getElementById('submit-overlay').style.display = 'flex';
         }
 
@@ -637,6 +858,7 @@
             const repoUrl = document.getElementById('sub-repourl').value.trim();
             const tool = document.getElementById('sub-tool').value;
             const promptText = document.getElementById('sub-prompt').value.trim();
+            if (verified()) return verifiedSubmission(questId, repoUrl, tool, promptText);
 
             const consoleBox = document.getElementById('evaluator-console');
             consoleBox.style.display = 'block';

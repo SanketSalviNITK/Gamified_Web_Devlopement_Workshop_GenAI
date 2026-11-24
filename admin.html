@@ -462,7 +462,8 @@
         function simulateParticipant() {
             const names = ['Aarav', 'Meera', 'Rohan', 'Kriti', 'Aditya', 'Sneha'];
             const nick = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 100);
-            WorkshopState.addParticipant(nick.toLowerCase(), nick);
+            const res = WorkshopState.addParticipant(nick.toLowerCase(), nick);
+            if (res && res.error) alert(res.error);
         }
 
         function simulateQuestSubmit() {
@@ -477,21 +478,23 @@
             const randomP = underLevel5[Math.floor(Math.random() * underLevel5.length)];
             const nextQuestId = randomP.currentQuest + 1;
             
-            WorkshopState.submitQuest(
+            const res = WorkshopState.submitQuest(
                 randomP.username,
                 nextQuestId,
                 `https://github.com/${randomP.username}/quest-${nextQuestId}-repo`,
                 ['Gemini', 'Claude', 'ChatGPT'][Math.floor(Math.random() * 3)],
                 `Simulated detailed prompts to initialize structures for Quest ${nextQuestId}.`
             );
+            if (res && res.error) alert(res.error);
         }
 
         let victoryTriggered = false;
 
         function resetState() {
             if (confirm('Are you sure you want to restore the Glitch Overlord health core and purge submissions?')) {
+                const res = WorkshopState.reset();
+                if (res && res.error) return alert(res.error);
                 victoryTriggered = false;
-                WorkshopState.reset();
             }
         }
 
