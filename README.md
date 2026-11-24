@@ -75,3 +75,20 @@ This project contains a `vercel.json` file for routing and security headers.
 ## 🛡️ Instructor Notes
 * The actual prompt instructions are stored in the `Walkthrough/` folder as `.md` files.
 * An `Instructor_Prompts/` folder contains pre-filled, test-ready prompts for live demonstrations. This folder is in `.gitignore` so students cannot access the answers via the repository!
+
+---
+
+## ⚔️ Glitch Arena (prototype projector view)
+
+`arena.html` is a redesigned projector view, built entirely with Three.js: every bot, the boss, the arena and all effects are procedural, with no external 3D models. It runs alongside the original `admin.html` and does not yet read real participant progress.
+
+* **Bots that assemble part by part:** Stasis Pod → Power Core (M1) → Chassis in the student's portfolio colour (M2) → Holo Wings (M3) → Avatar Head (M4) → Voice Core (M5). Proportions, eyes and antenna are derived from the username, and the class (Architect, Engineer, Promptsmith) adds drones, a cannon arm or orbiting glyphs.
+* **The Glitch Overlord:** armour plates break off as its health falls, it reacts to hits and taunts the room, and on defeat it shatters to free ARIA.
+* **Raid mechanics:** critical hits for verified labs, cohort combos, three boss phases, shield phases broken by quiz passes, rage mode, ambush quizzes, shockwaves, a victory screen with MVPs.
+* **Camera director, bloom and glitch post-processing,** a floor that heals from corrupted pink to cyan as the boss weakens, and synthesised sound (off until you press M or the speaker button).
+
+**Try it** (`node server.js`, then):
+* `http://localhost:3000/arena.html` runs a simulated 24-student raid. Press `H` for instructor shortcuts.
+* `arena.html?view=lineup` shows one bot at every stage side by side (`C` changes class, `K` changes colour).
+* `arena-control.html` is a game-master remote. It currently talks to the arena over `BroadcastChannel`, so it must be open in the same browser as the arena.
+* Options: `?demo=0` (no simulation), `?n=40` (cohort size), `?speed=2`, `?motion=reduced` (no camera swoops, shake or heavy glitching; also follows the OS reduced-motion setting).
