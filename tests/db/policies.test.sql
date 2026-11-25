@@ -113,5 +113,88 @@ select public._expect('instructor creates cohorts', (select count(*) = 1 from pu
 select public._expect('instructors are not raiders on the roster', (select count(*) = 1 from public.raid_roster('workshop')));
 reset role;
 
+
+-- 7. Course: lessons, server-scored quizzes, projector feed
+set role anon;
+select public._expect('anon reads quiz questions without answers', (select count(*) = 12 from (select id, prompt, options, kind from public.quiz_questions) x));
+select public._expect_denied('anon cannot read quiz answers', 'select answer from public.quiz_questions');
+select public._expect_denied('anon cannot read explanations', 'select explanations from public.quiz_questions');
+select public._expect_denied('anon cannot complete lessons', $q$select public.complete_lesson('m1.1')$q$);
+select public._expect_denied('anon cannot answer questions', $q$select public.answer_question(gen_random_uuid(), 'm1.q1', '1')$q$);
+reset role;
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select public._expect('student completes a lesson', (select (public.complete_lesson('m1.1') ->> 'new')::boolean));
+select public._expect('completing it again is not double-counted', (select not (public.complete_lesson('m1.1') ->> 'new')::boolean));
+select public._expect_denied('unknown lessons are rejected', $q$select public.complete_lesson('m9.9')$q$);
+select public._expect_denied('student cannot write lesson progress directly', $q$insert into public.lesson_progress values (auth.uid(), 'm1.2')$q$);
+select public._expect_denied('student cannot read answers either', 'select answer from public.quiz_questions');
+
+-- Feedback on a right and a wrong answer
+select public._expect('right answer is confirmed with its explanation',
+  (select (r ->> 'correct')::boolean and r ->> 'explanation' like 'Correct%' from (select public.answer_question('11111111-1111-1111-1111-111111111111', 'm1.q1', '1') r) x));
+select public._expect('wrong answer explains why, reveals the right one and links the lesson',
+  (select not (r ->> 'correct')::boolean and r ->> 'explanation' like 'Git accepts short messages%' and r ->> 'correct_explanation' like 'Correct%'
+          and r ->> 'hint' is not null and r ->> 'lesson' = 'm1.2'
+     from (select public.answer_question('11111111-1111-1111-1111-111111111111', 'm1.q2', '0') r) x));
+select public._expect('first answer in an attempt is the one that counts',
+  (select not (public.answer_question('11111111-1111-1111-1111-111111111111', 'm1.q2', '1') ->> 'correct')::boolean is false
+          and (select not correct from public.quiz_answers where attempt_id = '11111111-1111-1111-1111-111111111111' and question_id = 'm1.q2')));
+select public._expect('order questions are checked as a sequence',
+  (select (public.answer_question('11111111-1111-1111-1111-111111111111', 'm1.q8', '[2,1,3,0]') ->> 'correct')::boolean));
+select public._expect_denied('out-of-range choices are rejected', $q$select public.answer_question(gen_random_uuid(), 'm1.q1', '7')$q$);
+select public._expect_denied('a quiz cannot be finished early', $q$select public.finish_quiz('m1', '11111111-1111-1111-1111-111111111111')$q$);
+-- Answers so far: q1 right, q2 wrong, q8 right. Five more: q3 wrong, q4 q5 q6 q7 right -> 6/8.
+select public.answer_question('11111111-1111-1111-1111-111111111111', 'm1.q3', '0');
+select public.answer_question('11111111-1111-1111-1111-111111111111', 'm1.q4', '1');
+select public.answer_question('11111111-1111-1111-1111-111111111111', 'm1.q5', '1');
+select public.answer_question('11111111-1111-1111-1111-111111111111', 'm1.q6', '1');
+select public.answer_question('11111111-1111-1111-1111-111111111111', 'm1.q7', '0');
+select public._expect('quiz is scored on the server: 6/8 passes',
+  (select r ->> 'correct' = '6' and r ->> 'total' = '8' and (r ->> 'passed')::boolean and r -> 'review' ? 'm1.2'
+     from (select public.finish_quiz('m1', '11111111-1111-1111-1111-111111111111') r) x));
+-- A worse second attempt keeps the best score and doesn't announce again.
+select public.answer_question('22222222-2222-2222-2222-222222222222', id, '0') from public.quiz_questions where module = 'm1' and kind = 'single' order by id limit 8;
+select public._expect('a worse retry keeps the best score',
+  (select not (r ->> 'passed')::boolean and (r ->> 'best')::numeric = 0.75 and (r ->> 'module_passed')::boolean
+     from (select public.finish_quiz('m1', '22222222-2222-2222-2222-222222222222') r) x));
+select public._expect('projector feed: one lesson and one quiz pass, no failed attempts',
+  (select count(*) filter (where kind = 'lesson') = 1 and count(*) filter (where kind = 'quiz_pass' and detail = '6/8') = 1 and count(*) = 2
+     from public.raid_events where user_id = auth.uid()));
+reset role;
+reset request.jwt.claim.sub;
+
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000e';
+select public._expect('students cannot see each other''s quiz results', (select count(*) = 0 from public.quiz_results));
+select public._expect('students cannot see each other''s answers', (select count(*) = 0 from public.quiz_answers));
+select public._expect('students cannot see each other''s lesson progress', (select count(*) = 0 from public.lesson_progress));
+reset role;
+reset request.jwt.claim.sub;
+
+set role anon;
+select public._expect('roster shows lessons and quizzes for the projector',
+  (select lessons_done = 1 and quizzes_passed = 1 from public.raid_roster('workshop') where github_login = 'ana-dev'));
+reset role;
+
+-- Hardest-question insight: three more students all miss m1.q3.
+insert into public.enrollments (user_id, cohort_code) values
+  ('00000000-0000-0000-0000-00000000000d', 'workshop'), ('00000000-0000-0000-0000-00000000000e', 'workshop'), ('00000000-0000-0000-0000-00000000000f', 'workshop');
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000d';
+select public.answer_question(gen_random_uuid(), 'm1.q3', '0');
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000e';
+select public.answer_question(gen_random_uuid(), 'm1.q3', '2');
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000f';
+select public.answer_question(gen_random_uuid(), 'm1.q3', '1');
+reset role;
+reset request.jwt.claim.sub;
+set role anon;
+select public._expect('projector learns which question the class finds hardest',
+  (select question_id = 'm1.q3' and answered = 4 and missed = 3 and lesson = 'm1.2' and hint is not null
+     from public.cohort_insights('workshop') limit 1));
+reset role;
+
 select format('%s  %s', case when ok then 'PASS' else 'FAIL' end, name) from public._results order by n;
 select format('%s passed, %s failed', count(*) filter (where ok), count(*) filter (where not ok)) from public._results;

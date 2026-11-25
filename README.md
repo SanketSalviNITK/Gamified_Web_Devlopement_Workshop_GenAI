@@ -77,6 +77,23 @@ The site is plain static files, so GitHub Pages serves it as-is:
 
 ---
 
+## 📚 Glitch Academy (the course)
+
+`learn.html` is the course: a syllabus, short interactive lessons and a quiz for each module, followed by the GitHub-verified lab.
+
+* **Lessons** mix explanation, code, a quick self-check (every option explains why it is right or wrong) and an interactive animation. Module 1 (Git & GitHub) is complete: a time machine for commits, a Git simulator (working directory → staging area → repository), a commit-message judge, a push/pull visualiser, a live README editor that runs the real Quest 1 verifier rule, and a Prompt Lab.
+* **Quizzes** draw 8 questions from the module's bank and are scored in the database: browsers can read questions but never the answers. Each answer explains why it is right or wrong, gives a hint and links to the lesson to review; the results page lists what to revisit. 70% passes.
+* **The projector** counts learning too: lessons and quiz passes hit the boss (a lab is worth 10 lessons, a quiz pass 4), the feed shows who is progressing, and when most of the class misses the same question the arena shows it with the tip and the lesson to revisit. Answers and scores stay private; only passes are announced.
+* Lessons work without signing in (progress stays in the browser and is saved to the account after sign-in). Quizzes need GitHub sign-in.
+
+**Adding a module:** write `course/modules/mN.js` (lesson blocks) and `supabase/seed/quizzes/mN.json` (questions with an explanation per option, a hint and the lesson each tests), set `ready: true` in `course/course.js`, then generate a seed migration and apply it:
+
+```bash
+node tools/build-course-seed.mjs --out supabase/migrations/<timestamp>_course_seed.sql
+```
+
+`node --test tests/*.test.mjs` checks the content (one correct option per check, answer keys agree with explanations, seed up to date).
+
 ## ⚔️ Glitch Arena (new projector view)
 
 `arena.html` is a redesigned projector view, built entirely with Three.js: every bot, the boss, the arena and all effects are procedural, with no external 3D models. It runs alongside the original `admin.html`.

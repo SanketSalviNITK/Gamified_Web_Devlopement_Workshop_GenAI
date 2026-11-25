@@ -25,6 +25,7 @@ import { Director } from './director.js';
 import { Hud } from './hud.js';
 import { Sfx } from './audio.js';
 import { CLASSES, CLASS_KEYS, THEME_COLORS, STAGES, clamp, damp, pick, randomCommit, escapeHtml, hex } from './util.js';
+import { DAMAGE, READY_LESSONS, READY_QUIZZES, lessonById } from '../../course/course.js';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -281,6 +282,15 @@ function restyleRaider(r, { cls, color }) {
     hud.feed(`<b>${escapeHtml(r.name)}</b> rebuilt their bot as ${CLASSES[cls].label}`, 'join');
 }
 
+// Boss health counts all learning, weighted: a verified lab is worth 10 lessons, a quiz pass 4.
+const PER_STUDENT = 5 * DAMAGE.quest + READY_QUIZZES.length * DAMAGE.quiz + READY_LESSONS.length * DAMAGE.lesson;
+const progressOf = (p) => ({
+    quests: clamp(p.currentQuest | 0, 0, 5),
+    lessons: clamp(p.lessonsDone | 0, 0, READY_LESSONS.length),
+    quizzes: clamp(p.quizzesPassed | 0, 0, READY_QUIZZES.length),
+});
+const unitsOf = (g) => g.quests * DAMAGE.quest + g.quizzes * DAMAGE.quiz + g.lessons * DAMAGE.lesson;
+
 function syncLive(initial = false) {
     const state = readWorkshopState();
     const json = JSON.stringify(state.participants || []);
@@ -289,35 +299,38 @@ function syncLive(initial = false) {
 
     const people = (state.participants || []).filter((p) => p && p.username);
     const n = people.length;
-    const perQuest = n ? 100 / (n * 5) : 0;
-    const passed = people.reduce((a, p) => a + clamp(p.currentQuest | 0, 0, 5), 0);
-    live.target = n ? 100 * (1 - passed / (n * 5)) : 100;
+    const perUnit = n ? 100 / (n * PER_STUDENT) : 0;
+    const earned = people.reduce((a, p) => a + unitsOf(progressOf(p)), 0);
+    live.target = n ? 100 * (1 - earned / (n * PER_STUDENT)) : 100;
 
     const seen = new Set();
     const hits = [];
     let joined = 0;
+    const zero = { quests: 0, lessons: 0, quizzes: 0 };
     for (const p of people) {
         const id = String(p.username).toLowerCase();
         seen.add(id);
-        const quest = clamp(p.currentQuest | 0, 0, 5);
+        const now = progressOf(p);
         let r = findRaider(id);
         if (!r) {
             const look = lookFor(p, id);
-            r = addRaider({ id, name: p.displayName || p.username, cls: look.cls, color: look.color, stage: initial ? quest : 0 }, !initial);
+            r = addRaider({ id, name: p.displayName || p.username, cls: look.cls, color: look.color, stage: initial ? now.quests : 0 }, !initial);
             if (initial) r.spawnDelay = 0.4 + S.raiders.length * 0.05;
             else joined++;
-            live.known.set(id, initial ? quest : 0);
+            live.known.set(id, initial ? now : zero);
         }
         r.xp = p.xp | 0;
         const look = lookFor(p, id);
         if (look.cls !== r.cls || look.color !== r.color) restyleRaider(r, look);
-        const had = live.known.get(id) ?? 0;
-        for (let q = had + 1; q <= quest; q++) {
+        const had = live.known.get(id) ?? zero;
+        for (let k = had.lessons; k < now.lessons; k++) hits.push({ type: 'lesson', r, units: DAMAGE.lesson });
+        for (let k = had.quizzes; k < now.quizzes; k++) hits.push({ type: 'quiz', r, units: DAMAGE.quiz });
+        for (let q = had.quests + 1; q <= now.quests; q++) {
             const sub = p.submissions?.[q];
-            hits.push({ r, q, repo: repoLabel(sub?.url), commit: typeof sub?.commit === 'string' ? sub.commit.slice(0, 7) : '' });
+            hits.push({ type: 'lab', r, q, units: DAMAGE.quest, repo: repoLabel(sub?.url), commit: typeof sub?.commit === 'string' ? sub.commit.slice(0, 7) : '' });
         }
-        if (quest < had) { r.stage = quest; r.bot.setStage(quest, false); } // progress was reset
-        live.known.set(id, quest);
+        if (now.quests < had.quests) { r.stage = now.quests; r.bot.setStage(now.quests, false); } // progress was reset
+        live.known.set(id, now);
     }
     for (const r of [...S.raiders]) if (!seen.has(r.id)) { removeRaider(r); live.known.delete(r.id); }
 
@@ -330,7 +343,7 @@ function syncLive(initial = false) {
     }
 
     // Boss health before this batch of hits lands. Joins make the boss stronger.
-    const before = live.target + hits.length * perQuest;
+    const before = live.target + hits.reduce((a, h) => a + h.units * perUnit, 0);
     if (S.defeated && live.target > 0) {
         later(3, () => { resetRaid(false); setHp(live.target, { quiet: true }); bossLaugh('Fresh code to corrupt! I RETURN!'); });
     } else if (Math.abs(before - S.hp) > 0.01 && live.pending === 0) {
@@ -343,21 +356,48 @@ function syncLive(initial = false) {
     }
     if (!n) { resetRaid(false); setHp(100, { quiet: true }); hud.banner('WAITING FOR RAIDERS', 'Join from participant.html to enter the arena', 'phase', 3); }
 
-    hits.forEach(({ r, q, repo, commit }, i) => {
+    const land = () => {
+        live.pending = Math.max(0, live.pending - 1);
+        if (!live.pending && !S.defeated && Math.abs(S.hp - live.target) > 0.01) setHp(live.target);
+    };
+    hits.forEach((h, i) => {
         live.pending++;
-        later(0.3 + i * 0.7, () => {
-            const st = STAGES[q];
-            raiderEvent('lab', r, {
-                dmg: perQuest, repo: repo && commit ? `${repo}@${commit}` : repo,
-                title: 'CRITICAL HIT',
-                note: `<b>${escapeHtml(r.name)}</b> passed <i>${st.module}</i>${repo ? ` · <code>${escapeHtml(repo)}${commit ? '@' + escapeHtml(commit) : ''}</code>` : ''}`,
-                onLand: () => {
-                    live.pending = Math.max(0, live.pending - 1);
-                    if (!live.pending && !S.defeated && Math.abs(S.hp - live.target) > 0.01) setHp(live.target);
-                },
-            });
+        later(0.3 + i * 0.6, () => {
+            const name = `<b>${escapeHtml(h.r.name)}</b>`;
+            if (h.type === 'lesson') {
+                raiderEvent('lesson', h.r, { dmg: h.units * perUnit, onLand: land });
+                hud.feed(`${name} finished a lesson in the course`, 'info');
+            } else if (h.type === 'quiz') {
+                raiderEvent('quiz', h.r, { dmg: h.units * perUnit, score: 1, firstTry: false, onLand: land });
+                hud.feed(`${name} passed a module quiz 🧠`, 'lab');
+                hud.banner('QUIZ PASSED', `${name} proved it in the module quiz`, 'combo', 2.2);
+            } else {
+                const st = STAGES[h.q];
+                raiderEvent('lab', h.r, {
+                    dmg: h.units * perUnit, repo: h.repo && h.commit ? `${h.repo}@${h.commit}` : h.repo,
+                    title: 'CRITICAL HIT',
+                    note: `${name} passed <i>${st.module}</i>${h.repo ? ` · <code>${escapeHtml(h.repo)}${h.commit ? '@' + escapeHtml(h.commit) : ''}</code>` : ''}`,
+                    onLand: land,
+                });
+            }
         });
     });
+}
+
+// When most of the class misses the same quiz question, show it with the tip and the lesson to revisit.
+async function pollInsights() {
+    if (typeof WorkshopState === 'undefined' || WorkshopState.mode !== 'database' || S.defeated) return;
+    const { data } = await WorkshopState.client.rpc('cohort_insights', { p_cohort: WorkshopState.cohort });
+    const top = data && data[0];
+    if (!top) return;
+    const key = `${top.question_id}:${top.missed}`;
+    if (key === live.insightKey) return;
+    live.insightKey = key;
+    const info = top.lesson ? lessonById(top.lesson) : null;
+    const where = info ? ` · revisit Lesson ${escapeHtml(top.lesson.slice(1))}: ${escapeHtml(info.lesson.title)}` : '';
+    hud.banner('TRICKY QUESTION', `${top.missed} of ${top.answered} raiders missed: “${escapeHtml(top.prompt)}”<br>💡 ${escapeHtml(top.hint || '')}${where}`, 'phase', 8);
+    hud.feed(`<b>Class insight:</b> ${top.missed}/${top.answered} missed “${escapeHtml(top.prompt)}”${where}`, 'phase');
+    later(2.5, () => bossLaugh(pick(['Hah! That question got most of you.', 'Confused yet? Excellent.', 'Read the lesson again. I dare you.'])));
 }
 
 async function startLive() {
@@ -370,11 +410,12 @@ async function startLive() {
     window.addEventListener('workshopStateChanged', () => syncLive());
     window.addEventListener('storage', (e) => { if (e.key === STORAGE_KEY_LIVE) syncLive(); });
     setInterval(() => syncLive(), 3000); // safety net if an event is missed
+    if (verified) { later(20, pollInsights); setInterval(pollInsights, 45000); }
     const n = S.raiders.length;
     later(0.6, () => hud.banner(n ? 'RAID IN PROGRESS' : 'WAITING FOR RAIDERS',
         n ? `<b>${n}</b> raider${n > 1 ? 's' : ''} connected · every quest you pass hits the boss` : 'Join from participant.html to enter the arena', 'phase', 3));
     hud.feed(verified
-        ? `<b>Live raid.</b> Every hit is a quest verified against the student's GitHub repository`
+        ? `<b>Live raid.</b> Lessons, quiz passes and GitHub-verified labs all hit the boss`
         : `<b>Live raid (unverified).</b> Apply the database migration to verify progress`, 'info');
     later(1.6, () => bossLaugh(n ? 'Another cohort? Your code will crumble.' : 'No raiders? Then I win by default.'));
 }
@@ -965,4 +1006,4 @@ function tick(raw) {
 requestAnimationFrame(frame);
 
 // Test hook: advance the simulation without waiting for real frames (used for screenshots).
-window.__arena = { step(seconds, dt = 1 / 30) { for (let t = 0; t < seconds; t += dt) tick(dt); }, command, state: S, live, sync: () => syncLive() };
+window.__arena = { step(seconds, dt = 1 / 30) { for (let t = 0; t < seconds; t += dt) tick(dt); }, command, state: S, live, sync: () => syncLive(), insights: () => pollInsights() };

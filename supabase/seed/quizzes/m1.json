@@ -1,0 +1,248 @@
+{
+  "module": "m1",
+  "questions": [
+    {
+      "id": "m1.q1",
+      "kind": "single",
+      "lesson": "m1.2",
+      "prompt": "Which command stages every changed file for the next commit?",
+      "options": [
+        "git push",
+        "git add .",
+        "git commit",
+        "git init"
+      ],
+      "answer": 1,
+      "explanations": [
+        "git push uploads commits to GitHub. It doesn't stage anything.",
+        "Correct: git add . stages every change in the current folder.",
+        "git commit saves what is already staged. Staging comes first, with git add.",
+        "git init creates a new repository. You only run it once per project."
+      ],
+      "hint": "Staging means choosing what goes into the next snapshot."
+    },
+    {
+      "id": "m1.q2",
+      "kind": "single",
+      "lesson": "m1.2",
+      "prompt": "You edited index.html and ran git commit -m \"Update header\". Git replies \"nothing added to commit\". What went wrong?",
+      "options": [
+        "The commit message is too short",
+        "You didn't stage the change with git add",
+        "You need to push first",
+        "index.html is not a valid file name"
+      ],
+      "answer": 1,
+      "explanations": [
+        "Git accepts short messages. The message isn't the problem.",
+        "Correct: only staged changes are committed, so run git add index.html first.",
+        "Pushing comes after committing. There is nothing to push yet.",
+        "index.html is a perfectly valid file name."
+      ],
+      "hint": "Which of the three areas does git commit read from?"
+    },
+    {
+      "id": "m1.q3",
+      "kind": "single",
+      "lesson": "m1.2",
+      "prompt": "What is in the staging area?",
+      "options": [
+        "Every file in your project folder",
+        "Changes you have chosen to include in the next commit",
+        "Commits that are waiting on GitHub",
+        "Files Git is ignoring"
+      ],
+      "answer": 1,
+      "explanations": [
+        "That's the working directory. Staging only holds the changes you picked with git add.",
+        "Correct: the staging area is the next commit being prepared.",
+        "GitHub holds pushed commits. The staging area is on your computer, before any commit.",
+        "Ignored files never enter the staging area."
+      ],
+      "hint": "Think of it as the box you pack before sealing a snapshot."
+    },
+    {
+      "id": "m1.q4",
+      "kind": "single",
+      "lesson": "m1.3",
+      "prompt": "Which commit message is most useful?",
+      "options": [
+        "fix",
+        "Add About section to portfolio",
+        "asdfgh",
+        "changes 2"
+      ],
+      "answer": 1,
+      "explanations": [
+        "Fix what? In a long history this tells you nothing.",
+        "Correct: specific and written as an instruction.",
+        "Random letters make the history impossible to search.",
+        "Numbered vague messages don't say what changed."
+      ],
+      "hint": "Good messages say what changed, as a short instruction."
+    },
+    {
+      "id": "m1.q5",
+      "kind": "single",
+      "lesson": "m1.3",
+      "prompt": "What uniquely identifies a commit?",
+      "options": [
+        "Its message",
+        "Its hash, like a1b2c3d",
+        "The time it was made",
+        "The file names it changed"
+      ],
+      "answer": 1,
+      "explanations": [
+        "Two commits can have the same message.",
+        "Correct: every commit gets a unique hash. The verifier records it as proof of your work.",
+        "Two people can commit at the same moment.",
+        "Many commits change the same files."
+      ],
+      "hint": "The projector shows it next to every verified quest."
+    },
+    {
+      "id": "m1.q6",
+      "kind": "single",
+      "lesson": "m1.4",
+      "prompt": "What does git push do?",
+      "options": [
+        "Saves a snapshot on your computer",
+        "Sends your commits to the remote repository on GitHub",
+        "Downloads the latest commits from GitHub",
+        "Stages your changes"
+      ],
+      "answer": 1,
+      "explanations": [
+        "That's git commit.",
+        "Correct: push uploads commits to origin, usually GitHub.",
+        "That's git pull.",
+        "That's git add."
+      ],
+      "hint": "Push sends up, pull brings down."
+    },
+    {
+      "id": "m1.q7",
+      "kind": "single",
+      "lesson": "m1.4",
+      "prompt": "You pushed your work, but the workshop verifier says \"Repository not found\". What's the most likely cause?",
+      "options": [
+        "The repository is private",
+        "You used git add . instead of git add index.html",
+        "Your commit message has spaces",
+        "You pushed too many files"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: the verifier can only read public repositories. Change the visibility in the repository settings.",
+        "Both forms stage files. This doesn't affect whether the repository can be found.",
+        "Spaces in messages are normal.",
+        "The number of files doesn't hide a repository."
+      ],
+      "hint": "Who is allowed to see the repository?"
+    },
+    {
+      "id": "m1.q8",
+      "kind": "order",
+      "lesson": "m1.4",
+      "prompt": "Put these commands in order to publish a brand-new project (the GitHub remote is already added).",
+      "options": [
+        "git push -u origin main",
+        "git add .",
+        "git init",
+        "git commit -m \"First commit\""
+      ],
+      "answer": [
+        2,
+        1,
+        3,
+        0
+      ],
+      "explanations": [
+        "Create the repository (init), stage the files (add), save the snapshot (commit), then upload it (push)."
+      ],
+      "hint": "Create, stage, save, upload."
+    },
+    {
+      "id": "m1.q9",
+      "kind": "single",
+      "lesson": "m1.5",
+      "prompt": "Which line makes a heading in Markdown?",
+      "options": [
+        "**My Portfolio**",
+        "# My Portfolio",
+        "- My Portfolio",
+        "<My Portfolio>"
+      ],
+      "answer": 1,
+      "explanations": [
+        "Double asterisks make bold text.",
+        "Correct: # starts a heading; ## makes a smaller one.",
+        "A dash starts a bullet-list item.",
+        "Angle brackets aren't Markdown syntax for headings."
+      ],
+      "hint": "It's a single symbol at the start of the line."
+    },
+    {
+      "id": "m1.q10",
+      "kind": "single",
+      "lesson": "m1.5",
+      "prompt": "Spot the bug in this README. Which line is broken?",
+      "code": "1  # Ana's Portfolio\n2  Built during the GenAI web workshop.\n3  [Live site](https://ana.github.io\n4  - HTML, CSS and Three.js",
+      "options": [
+        "Line 1",
+        "Line 2",
+        "Line 3",
+        "Line 4"
+      ],
+      "answer": 2,
+      "explanations": [
+        "A # heading with an apostrophe is fine.",
+        "A plain sentence becomes a paragraph. Nothing wrong here.",
+        "Correct: the link is missing its closing bracket. It should end with ...github.io)",
+        "A dash makes a valid list item."
+      ],
+      "hint": "Links look like [text](address). Count the brackets."
+    },
+    {
+      "id": "m1.q11",
+      "kind": "single",
+      "lesson": "m1.6",
+      "prompt": "Which prompt will get you the most useful answer?",
+      "options": [
+        "git help",
+        "Give me git commands",
+        "You are a patient Git teacher. I'm on Windows with a folder called portfolio. Give me numbered steps to create a repo, add a README and push it to https://github.com/ana/portfolio, and explain each command.",
+        "Do everything for my GitHub, quickly"
+      ],
+      "answer": 2,
+      "explanations": [
+        "Too vague: the AI has to guess what you want.",
+        "Which commands? For what? Missing task, context and format.",
+        "Correct: role, task, context, constraints and output format are all there.",
+        "\"Everything\" and \"quickly\" give the AI nothing specific to work with."
+      ],
+      "hint": "Role, task, context, constraints, output format."
+    },
+    {
+      "id": "m1.q12",
+      "kind": "single",
+      "lesson": "m1.6",
+      "prompt": "The AI suggests a command you don't understand. What should you do?",
+      "options": [
+        "Run it straight away",
+        "Ask the AI to explain it line by line first",
+        "Skip the whole task",
+        "Copy it into your README"
+      ],
+      "answer": 1,
+      "explanations": [
+        "Some commands delete or overwrite work. Understand first.",
+        "Correct: you stay in control and you learn something.",
+        "No need to give up. Ask for an explanation instead.",
+        "That doesn't help you understand or run it safely."
+      ],
+      "hint": "You are the pilot; the AI is the co-pilot."
+    }
+  ]
+}

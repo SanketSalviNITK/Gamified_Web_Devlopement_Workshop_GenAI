@@ -43,10 +43,10 @@
 
         .portal-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 32px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 28px;
             width: 100%;
-            max-width: 800px;
+            max-width: 1080px;
         }
 
         .portal-card {
@@ -118,6 +118,17 @@
         <p class="subtitle">Welcome to the Gamified GenAI Web Development Workshop. Master GitHub, code stunning interfaces with AI companions, build a 3D Avatar, and ignite its conversational chatbot brain.</p>
 
         <div class="portal-grid">
+            <!-- Course Card -->
+            <div class="portal-card glass-panel portal-participant" onclick="location.href='learn.html'">
+                <div class="icon-box">📚</div>
+                <h2 class="portal-title text-neon-cyan">Glitch Academy</h2>
+                <p class="portal-desc">Start here. Short interactive lessons with animations, quizzes that explain every answer, and a lab for each module.</p>
+                <div class="badge-list">
+                    <span class="role-tag">COURSE</span>
+                    <span class="role-tag" style="color:var(--neon-purple)">LESSONS_AND_QUIZZES</span>
+                </div>
+            </div>
+
             <!-- Participant Portal Card -->
             <div class="portal-card glass-panel portal-participant" onclick="location.href='participant.html'">
                 <div class="icon-box">💻</div>

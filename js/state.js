@@ -74,6 +74,7 @@ class WorkshopState {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'quest_passes' }, soon)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'enrollments' }, soon)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, soon)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'raid_events' }, soon)
             .subscribe();
     }
 
@@ -198,7 +199,10 @@ function toParticipant(row) {
         displayName: row.display_name,
         botName: `${row.github_login.charAt(0).toUpperCase()}X-${String(row.github_login.length * 97 % 900 + 100)}`,
         currentQuest: row.quests_passed,
-        xp: xpForQuests(row.quests_passed),
+        lessonsDone: row.lessons_done || 0,
+        quizzesPassed: row.quizzes_passed || 0,
+        // Lessons are worth 10 XP and quiz passes 50 XP (course/course.js XP), on top of quest XP.
+        xp: xpForQuests(row.quests_passed) + (row.lessons_done || 0) * 10 + (row.quizzes_passed || 0) * 50,
         cls: row.bot_class,
         themeColor: row.theme_color,
         joinedAt: row.joined_at,
