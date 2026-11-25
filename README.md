@@ -1,6 +1,6 @@
 # 🎮 Gamified Web Development Workshop (GenAI)
 
-![Cybernetic Aesthetic Banner](https://img.shields.io/badge/UI-Glassmorphism-06b6d4?style=for-the-badge) ![State Sync](https://img.shields.io/badge/Sync-Supabase_Realtime-22c55e?style=for-the-badge) ![Deployment](https://img.shields.io/badge/Deployed-Vercel-black?style=for-the-badge)
+![Cybernetic Aesthetic Banner](https://img.shields.io/badge/UI-Glassmorphism-06b6d4?style=for-the-badge) ![State Sync](https://img.shields.io/badge/Sync-Supabase_Realtime-22c55e?style=for-the-badge) ![Deployment](https://img.shields.io/badge/Deployed-GitHub_Pages-222222?style=for-the-badge&logo=github)
 
 Welcome to the **Gamified Web Development Workshop**, an interactive, multiplayer, cyber-themed educational experience. This platform teaches students web development (HTML, CSS, JS, and Three.js) by having them use Generative AI tools (ChatGPT, Gemini, Claude) as their "coding assistants."
 
