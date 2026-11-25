@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course</title>
+    <meta name="description" content="Interactive lessons, explained quizzes and GitHub-verified labs for the Gamified Web Development with GenAI workshop.">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/learn.css">
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="#/"><span class="brand-mark" aria-hidden="true">◆</span> Glitch Academy</a>
+        <nav class="toplinks" aria-label="Workshop">
+            <a href="#/">Course</a>
+            <a href="participant.html">Lab deck</a>
+            <a href="arena.html" target="_blank" rel="noopener">Arena ↗</a>
+        </nav>
+        <div id="who" class="who"></div>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <details class="nav-wrap" open>
+                <summary>Course map</summary>
+                <nav id="course-nav" aria-label="Course map"></nav>
+            </details>
+        </aside>
+        <main id="main" class="main" tabindex="-1"><div class="loading">Loading the course…</div></main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/state.js"></script>
+    <script type="module" src="course/app.js"></script>
+</body>
+</html>

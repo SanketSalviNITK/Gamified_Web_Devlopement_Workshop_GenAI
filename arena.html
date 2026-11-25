@@ -141,7 +141,8 @@
             font-size: calc(var(--u) * 3.6); font-weight: 700; letter-spacing: 0.08em; line-height: 1.05;
             color: #fff; text-shadow: 0 0 30px currentColor, 0 4px 0 rgba(0,0,0,0.4);
         }
-        #banner-sub { margin-top: 0.5rem; font-size: calc(var(--u) * 1.15); color: #e2e8f0; text-shadow: 0 2px 10px #000; }
+        #banner-sub { display: inline-block; margin-top: 0.6rem; max-width: min(1100px, 86vw); padding: 0.45em 0.9em; border-radius: 12px; font-size: calc(var(--u) * 1.15); line-height: 1.45; color: #f1f5f9; background: rgba(5, 4, 12, 0.78); backdrop-filter: blur(6px); text-shadow: none; }
+        #banner-sub:empty { display: none; }
         .banner.crit #banner-title { color: var(--gold); }
         .banner.phase #banner-title, .banner.rage #banner-title { color: var(--corrupt); }
         .banner.combo #banner-title { color: var(--cyan); }

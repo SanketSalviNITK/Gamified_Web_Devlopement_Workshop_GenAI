@@ -383,6 +383,7 @@
                 <p style="color:var(--text-secondary); font-size:0.9rem;">Cybernetic Assembly Mainframe</p>
             </div>
             <div style="display:flex; gap:10px;">
+                <a class="btn-cyber" href="learn.html" style="padding:10px 18px; text-decoration:none;">📚 Course</a>
                 <button id="sign-out" class="btn-cyber" onclick="signOut()" style="display:none; padding:10px 18px; background:transparent; border:1px solid rgba(255,255,255,0.15); box-shadow:none;">Sign out</button>
                 <button class="btn-cyber" onclick="location.href='index.html'" style="padding:10px 18px; background:transparent; border:1px solid rgba(255,255,255,0.15); box-shadow:none;">Exit Deck</button>
             </div>
@@ -609,7 +610,11 @@
             renderProfile({ displayName: profile.display_name, line: `@${profile.github_login} · verified with GitHub`, currentQuest: quest, xp: xpFor(quest) });
             renderCustomiser();
             renderQuestsList(quest);
+            // Arriving from a course lab button (participant.html?submit=N): open that quest's form once.
+            const wanted = Number(new URLSearchParams(location.search).get('submit'));
+            if (!autoOpened && wanted >= 1 && wanted <= Math.min(5, quest + 1)) { autoOpened = true; openSubmitModal(wanted); }
         }
+        let autoOpened = false;
 
         function renderCustomiser() {
             document.getElementById('bot-custom').style.display = '';
@@ -745,7 +750,8 @@
                 let statusText = '🔒 System Locked';
                 let actionBtn = '';
 
-                let intelBtn = `<button class="btn-cyber" onclick="openIntelModal(${q.id})" style="background:transparent; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); box-shadow:none; padding:8px 14px; margin-right:8px;">View Intel</button>`;
+                const learnBtn = `<a class="btn-cyber" href="learn.html#/m${q.id}" style="background:transparent; border: 1px solid var(--neon-purple); color: var(--neon-purple); box-shadow:none; padding:8px 14px; margin-right:8px; text-decoration:none;">Learn</a>`;
+                let intelBtn = learnBtn + `<button class="btn-cyber" onclick="openIntelModal(${q.id})" style="background:transparent; border: 1px solid var(--neon-cyan); color: var(--neon-cyan); box-shadow:none; padding:8px 14px; margin-right:8px;">View Intel</button>`;
 
                 if (currentQuestId >= q.id) {
                     statusClass = 'completed';
