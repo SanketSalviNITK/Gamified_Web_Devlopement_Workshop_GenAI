@@ -1,0 +1,248 @@
+{
+  "module": "m3",
+  "questions": [
+    {
+      "id": "m3.q1",
+      "kind": "single",
+      "lesson": "m3.1",
+      "prompt": "In Three.js, what does the renderer do?",
+      "options": [
+        "Holds all the objects and lights",
+        "Draws what the camera sees onto a <canvas>",
+        "Decides which part of the world you see",
+        "Loads 3D models from files"
+      ],
+      "answer": 1,
+      "explanations": [
+        "That's the scene: the world that contains everything.",
+        "Correct: the renderer turns the camera's view into pixels on a canvas.",
+        "That's the camera's job.",
+        "Loaders (like GLTFLoader in Module 4) load models. The renderer draws."
+      ],
+      "hint": "Scene = world, camera = eye, renderer = …?"
+    },
+    {
+      "id": "m3.q2",
+      "kind": "order",
+      "lesson": "m3.1",
+      "prompt": "Put these lines in order so the cube appears on screen.",
+      "options": [
+        "renderer.render(scene, camera);",
+        "import * as THREE from 'three';",
+        "scene.add(cube);",
+        "const scene = new THREE.Scene();"
+      ],
+      "answer": [
+        1,
+        3,
+        2,
+        0
+      ],
+      "explanations": [
+        "Import Three.js first (everything else uses THREE), create the scene, add the cube to it, and only then render: rendering before adding draws an empty world."
+      ],
+      "hint": "Each line needs the one before it."
+    },
+    {
+      "id": "m3.q3",
+      "kind": "single",
+      "lesson": "m3.1",
+      "prompt": "Your cube is at (0, 0, 0) and so is your camera. You see nothing. What's the simplest fix?",
+      "options": [
+        "camera.position.z = 4",
+        "Make the cube smaller",
+        "Add a second scene",
+        "Set the canvas background to white"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: move the camera back so the cube is in front of it.",
+        "The camera is inside the cube; a smaller cube is still around the camera.",
+        "One scene is enough. The camera needs to step back.",
+        "The background colour doesn't change what the camera can see."
+      ],
+      "hint": "Everything starts at the centre."
+    },
+    {
+      "id": "m3.q4",
+      "kind": "single",
+      "lesson": "m3.2",
+      "prompt": "Which line creates a visible object correctly?",
+      "options": [
+        "new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial())",
+        "new THREE.Geometry(new THREE.Mesh())",
+        "new THREE.Material(new THREE.BoxGeometry())",
+        "new THREE.Scene(new THREE.BoxGeometry())"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: a mesh takes a geometry (shape) and a material (surface).",
+        "It's the other way round: the mesh contains the geometry.",
+        "A material doesn't take a geometry; both go into a Mesh.",
+        "A scene is created empty; you add meshes to it with scene.add()."
+      ],
+      "hint": "Mesh(shape, surface)."
+    },
+    {
+      "id": "m3.q5",
+      "kind": "single",
+      "lesson": "m3.2",
+      "prompt": "Spot the bug. Nothing appears on screen. Which line is missing?",
+      "code": "1  const geometry = new THREE.TorusKnotGeometry();\n2  const material = new THREE.MeshNormalMaterial();\n3  const knot = new THREE.Mesh(geometry, material);\n4  renderer.render(scene, camera);",
+      "options": [
+        "A line creating a second material",
+        "scene.add(knot) before rendering",
+        "geometry.render()",
+        "material.show = true"
+      ],
+      "answer": 1,
+      "explanations": [
+        "One material is enough.",
+        "Correct: the knot was created but never added to the scene.",
+        "Geometries don't render themselves; the renderer draws the scene.",
+        "Materials have no show property. The mesh needs adding to the scene."
+      ],
+      "hint": "Is the knot in the world?"
+    },
+    {
+      "id": "m3.q6",
+      "kind": "single",
+      "lesson": "m3.3",
+      "prompt": "Your MeshStandardMaterial object is completely black. Why?",
+      "options": [
+        "There are no lights in the scene",
+        "The camera is too close",
+        "The geometry is too simple",
+        "The renderer is too small"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: standard materials only show colour where light hits them.",
+        "A close camera still sees colour if there's light.",
+        "Simple shapes still show colour when lit.",
+        "Canvas size doesn't change whether the object is lit."
+      ],
+      "hint": "What do realistic materials need to be seen?"
+    },
+    {
+      "id": "m3.q7",
+      "kind": "single",
+      "lesson": "m3.3",
+      "prompt": "Which light works like the sun, with parallel rays from one direction?",
+      "options": [
+        "AmbientLight",
+        "DirectionalLight",
+        "PointLight",
+        "MeshBasicMaterial"
+      ],
+      "answer": 1,
+      "explanations": [
+        "Ambient light fills everything evenly, with no direction.",
+        "Correct: directional light has parallel rays, like sunlight.",
+        "A point light shines outward from one spot, like a bulb.",
+        "That's a material that ignores light, not a light."
+      ],
+      "hint": "Think of the sun."
+    },
+    {
+      "id": "m3.q8",
+      "kind": "single",
+      "lesson": "m3.3",
+      "prompt": "Which material ignores lights and always shows its flat colour?",
+      "options": [
+        "MeshStandardMaterial",
+        "MeshBasicMaterial",
+        "MeshPhysicalMaterial",
+        "All materials ignore lights"
+      ],
+      "answer": 1,
+      "explanations": [
+        "Standard material reacts to light: it's black in the dark.",
+        "Correct: Basic material is unlit, one flat colour.",
+        "Physical material is even more realistic than standard, so it needs light too.",
+        "Most realistic materials depend on light."
+      ],
+      "hint": "Its name says it's the simplest one."
+    },
+    {
+      "id": "m3.q9",
+      "kind": "single",
+      "lesson": "m3.4",
+      "prompt": "What does requestAnimationFrame(animate) do?",
+      "options": [
+        "Calls animate once, just before the next screen refresh",
+        "Calls animate every second",
+        "Records a video of the canvas",
+        "Loads the next frame of a 3D model"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: and calling it again inside animate creates a loop.",
+        "It follows the screen's refresh rate (often 60 times a second), not once a second.",
+        "It doesn't record anything.",
+        "It's a browser timing function, not a model loader."
+      ],
+      "hint": "It's how the loop keeps going, frame after frame."
+    },
+    {
+      "id": "m3.q10",
+      "kind": "single",
+      "lesson": "m3.4",
+      "prompt": "How much is a full turn in Three.js rotation units?",
+      "options": [
+        "360",
+        "Math.PI * 2",
+        "1",
+        "100"
+      ],
+      "answer": 1,
+      "explanations": [
+        "Three.js uses radians, not degrees.",
+        "Correct: a full turn is 2π radians, about 6.28.",
+        "1 radian is about 57 degrees, not a full turn.",
+        "Rotation isn't measured in percent."
+      ],
+      "hint": "Radians, not degrees."
+    },
+    {
+      "id": "m3.q11",
+      "kind": "single",
+      "lesson": "m3.5",
+      "prompt": "Which CSS makes the 3D canvas a full-screen background behind your content?",
+      "options": [
+        "canvas { position: fixed; inset: 0; z-index: -1; }",
+        "canvas { display: none; }",
+        "canvas { width: 50%; }",
+        "canvas { position: absolute; z-index: 999; }"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: pinned to the window, full screen, behind everything.",
+        "That hides the canvas completely.",
+        "Half width is still in the page flow, pushing content around.",
+        "z-index 999 puts it on top of your content, covering it."
+      ],
+      "hint": "Pinned, full-screen, and behind."
+    },
+    {
+      "id": "m3.q12",
+      "kind": "single",
+      "lesson": "m3.5",
+      "prompt": "After resizing the window, your 3D scene looks stretched. What did you forget?",
+      "options": [
+        "Updating camera.aspect, calling camera.updateProjectionMatrix() and renderer.setSize() on resize",
+        "Reloading Three.js",
+        "Adding another light",
+        "Changing the geometry"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: the camera and canvas need the new width and height.",
+        "Three.js is already loaded; it needs the new size, not a reload.",
+        "Lights don't affect stretching.",
+        "The shape is fine; the camera's aspect ratio is out of date."
+      ],
+      "hint": "Width ÷ height changed."
+    }
+  ]
+}

@@ -16,6 +16,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const SEED_FILES = {
     m1: 'supabase/migrations/20261125000100_course_seed.sql',
     m2: 'supabase/migrations/20261125010000_course_seed_m2.sql',
+    m3: 'supabase/migrations/20261125020000_course_seed_m3.sql',
 };
 
 const q = (s) => (s === null || s === undefined ? 'null' : `'${String(s).replace(/'/g, "''")}'`);
