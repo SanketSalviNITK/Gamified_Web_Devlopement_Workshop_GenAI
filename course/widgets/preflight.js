@@ -3,8 +3,10 @@
 import { el } from './util.js';
 import { QUESTS, buildContext, runQuestChecks } from '../../supabase/functions/_shared/checks.js';
 
-export function mount(root, { quest = 2 } = {}) {
+export function mount(root, { quest = 2, js = null } = {}) {
     const input = el('textarea.md-input', { spellcheck: 'false', rows: 10, 'aria-label': 'Your index.html', placeholder: 'Paste the full contents of your index.html here…' });
+    // Optional second file, e.g. bg.js for Quest 3 (the verifier reads every .js file in the repo).
+    const jsInput = js ? el('textarea.md-input', { spellcheck: 'false', rows: 10, 'aria-label': `Your ${js}`, placeholder: `Paste ${js} here (leave empty if your script is inside index.html)…` }) : null;
     const run = el('button.w-btn', { type: 'button' }, `✈️ Run the Quest ${quest} checks`);
     const out = el('ul.pf-results', { 'aria-live': 'polite' });
     const summary = el('div.pf-summary');
@@ -12,7 +14,9 @@ export function mount(root, { quest = 2 } = {}) {
     run.addEventListener('click', () => {
         const text = input.value;
         if (!text.trim()) { summary.textContent = 'Paste your index.html first.'; out.replaceChildren(); return; }
-        const results = runQuestChecks(quest, buildContext({ files: { 'index.html': text }, paths: ['index.html'] }));
+        const files = { 'index.html': text };
+        if (jsInput && jsInput.value.trim()) files[js] = jsInput.value;
+        const results = runQuestChecks(quest, buildContext({ files, paths: Object.keys(files) }));
         const ok = results.filter((r) => r.pass).length;
         summary.className = `pf-summary ${ok === results.length ? 'good' : 'bad'}`;
         summary.textContent = ok === results.length
@@ -26,7 +30,7 @@ export function mount(root, { quest = 2 } = {}) {
 
     root.append(
         el('div.w-head', {}, el('span.w-tag', {}, 'Pre-flight check'), el('span', {}, `Quest ${quest}: ${QUESTS[quest]}`)),
-        input,
+        jsInput ? el('div.pf-files', {}, el('div', {}, el('div.w-label', {}, 'index.html'), input), el('div', {}, el('div.w-label', {}, js), jsInput)) : input,
         el('div.pf-row', {}, run),
         summary, out,
     );

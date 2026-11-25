@@ -25,6 +25,11 @@ const WIDGETS = {
     glass: () => import('./widgets/glass.js'),
     responsive: () => import('./widgets/responsive.js'),
     preflight: () => import('./widgets/preflight.js'),
+    scenebuilder: () => import('./widgets/scenebuilder.js'),
+    meshlab: () => import('./widgets/meshlab.js'),
+    lightlab: () => import('./widgets/lightlab.js'),
+    looplab: () => import('./widgets/looplab.js'),
+    bglab: () => import('./widgets/bglab.js'),
 };
 const QUEST_XP = [0, 100, 300, 600, 1000, 1500];
 const LOCAL_KEY = 'course_progress_v1';
@@ -166,7 +171,15 @@ function toast(text, kind = 'info') {
 
 // ---------------------------------------------------------------------------- router
 
+// Widgets may return a cleanup function (3D scenes stop their loop and free their WebGL context).
+let disposers = [];
+function cleanupWidgets() {
+    for (const d of disposers) { try { d(); } catch { /* already gone */ } }
+    disposers = [];
+}
+
 function route() {
+    cleanupWidgets();
     const hash = location.hash || '#/';
     const [, a, b] = hash.split('/');
     renderNav();
@@ -290,7 +303,14 @@ async function renderBlock(b, onCheckPassed) {
         case 'widget': {
             const box = el('div.widget', { 'data-widget': b.name });
             const loader = WIDGETS[b.name];
-            if (loader) (await loader()).mount(box, b.props || {});
+            if (loader) {
+                try {
+                    const dispose = (await loader()).mount(box, b.props || {});
+                    if (typeof dispose === 'function') disposers.push(dispose);
+                } catch (err) {
+                    box.append(el('p.gate', {}, `This animation couldn't load (${err.message}). The rest of the lesson still works.`));
+                }
+            }
             box.addEventListener('widget-goal', () => box.classList.add('goal'));
             return box;
         }
