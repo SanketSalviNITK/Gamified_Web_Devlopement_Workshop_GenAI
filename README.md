@@ -81,16 +81,18 @@ The site is plain static files, so GitHub Pages serves it as-is:
 
 `learn.html` is the course: a syllabus, short interactive lessons and a quiz for each module, followed by the GitHub-verified lab.
 
-* **Lessons** mix explanation, code, a quick self-check (every option explains why it is right or wrong) and an interactive animation. Module 1 (Git & GitHub) is complete: a time machine for commits, a Git simulator (working directory → staging area → repository), a commit-message judge, a push/pull visualiser, a live README editor that runs the real Quest 1 verifier rule, and a Prompt Lab.
+* **Lessons** mix explanation, code, a quick self-check (every option explains why it is right or wrong) and an interactive animation. **Module 2 (HTML & CSS portfolio)** is complete too: a layers view that peels the CSS off a page, a section builder and a glass tuner that run the real Quest 2 verifier rules, a box-model lab, a flexbox/grid playground, a device resizer (with and without the viewport tag) and a pre-flight check that runs every Quest 2 check on a pasted index.html. Module 1 (Git & GitHub): a time machine for commits, a Git simulator (working directory → staging area → repository), a commit-message judge, a push/pull visualiser, a live README editor that runs the real Quest 1 verifier rule, and a Prompt Lab.
 * **Quizzes** draw 8 questions from the module's bank and are scored in the database: browsers can read questions but never the answers. Each answer explains why it is right or wrong, gives a hint and links to the lesson to review; the results page lists what to revisit. 70% passes.
 * **The projector** counts learning too: lessons and quiz passes hit the boss (a lab is worth 10 lessons, a quiz pass 4), the feed shows who is progressing, and when most of the class misses the same question the arena shows it with the tip and the lesson to revisit. Answers and scores stay private; only passes are announced.
 * Lessons work without signing in (progress stays in the browser and is saved to the account after sign-in). Quizzes need GitHub sign-in.
 
-**Adding a module:** write `course/modules/mN.js` (lesson blocks) and `supabase/seed/quizzes/mN.json` (questions with an explanation per option, a hint and the lesson each tests), set `ready: true` in `course/course.js`, then generate a seed migration and apply it:
+**Adding a module:** write `course/modules/mN.js` (lesson blocks) and `supabase/seed/quizzes/mN.json` (questions with an explanation per option, a hint and the lesson each tests), set `ready: true` in `course/course.js`, add a new migration file name for it to `SEED_FILES` in `tools/build-course-seed.mjs`, then generate the seed and apply that migration:
 
 ```bash
-node tools/build-course-seed.mjs --out supabase/migrations/<timestamp>_course_seed.sql
+node tools/build-course-seed.mjs
 ```
+
+Each module has its own seed migration, so publishing one never edits a migration that is already applied.
 
 `node --test tests/*.test.mjs` checks the content (one correct option per check, answer keys agree with explanations, seed up to date).
 
