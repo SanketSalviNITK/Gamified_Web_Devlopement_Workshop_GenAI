@@ -18,6 +18,13 @@ const WIDGETS = {
     remote: () => import('./widgets/remote.js'),
     markdown: () => import('./widgets/markdown.js'),
     promptlab: () => import('./widgets/promptlab.js'),
+    layers: () => import('./widgets/layers.js'),
+    sections: () => import('./widgets/sections.js'),
+    boxmodel: () => import('./widgets/boxmodel.js'),
+    flexgrid: () => import('./widgets/flexgrid.js'),
+    glass: () => import('./widgets/glass.js'),
+    responsive: () => import('./widgets/responsive.js'),
+    preflight: () => import('./widgets/preflight.js'),
 };
 const QUEST_XP = [0, 100, 300, 600, 1000, 1500];
 const LOCAL_KEY = 'course_progress_v1';

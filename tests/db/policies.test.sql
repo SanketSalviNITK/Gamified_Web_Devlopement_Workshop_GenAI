@@ -116,7 +116,8 @@ reset role;
 
 -- 7. Course: lessons, server-scored quizzes, projector feed
 set role anon;
-select public._expect('anon reads quiz questions without answers', (select count(*) = 12 from (select id, prompt, options, kind from public.quiz_questions) x));
+select public._expect('anon reads quiz questions without answers', (select count(*) = 12 from (select id, prompt, options, kind from public.quiz_questions where module = 'm1') x));
+select public._expect('module 2 has its own 12 questions', (select count(*) = 12 from (select id from public.quiz_questions where module = 'm2') x));
 select public._expect_denied('anon cannot read quiz answers', 'select answer from public.quiz_questions');
 select public._expect_denied('anon cannot read explanations', 'select explanations from public.quiz_questions');
 select public._expect_denied('anon cannot complete lessons', $q$select public.complete_lesson('m1.1')$q$);
@@ -195,6 +196,18 @@ select public._expect('projector learns which question the class finds hardest',
   (select question_id = 'm1.q3' and answered = 4 and missed = 3 and lesson = 'm1.2' and hint is not null
      from public.cohort_insights('workshop') limit 1));
 reset role;
+
+-- 8. Module 2 scoring
+set role authenticated;
+set request.jwt.claim.sub = '00000000-0000-0000-0000-00000000000a';
+select public._expect('module 2: box-model order question is checked as a sequence',
+  (select (public.answer_question('33333333-3333-3333-3333-333333333333', 'm2.q5', '[2,1,3,0]') ->> 'correct')::boolean
+      and not (public.answer_question('44444444-4444-4444-4444-444444444444', 'm2.q5', '[0,3,1,2]') ->> 'correct')::boolean));
+select public._expect('module 2: wrong answer links its own lesson',
+  (select r ->> 'lesson' = 'm2.3' and not (r ->> 'correct')::boolean from (select public.answer_question('33333333-3333-3333-3333-333333333333', 'm2.q7', '0') r) x));
+select public._expect('module 2 lessons can be completed', (select (public.complete_lesson('m2.4') ->> 'new')::boolean));
+reset role;
+reset request.jwt.claim.sub;
 
 select format('%s  %s', case when ok then 'PASS' else 'FAIL' end, name) from public._results order by n;
 select format('%s passed, %s failed', count(*) filter (where ok), count(*) filter (where not ok)) from public._results;
