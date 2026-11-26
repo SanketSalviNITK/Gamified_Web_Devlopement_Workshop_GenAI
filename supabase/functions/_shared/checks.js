@@ -198,13 +198,17 @@ export const RULES = {
             test: (c) => {
                 for (const chunk of c.jsChunks) {
                     for (const m of chunk.text.matchAll(/['"`]([^'"`\s]+?\.(glb|gltf))(\?[^'"`]*)?['"`]/gi)) {
-                        const ref = resolveRepoPath(m[1], chunk.path);
-                        if (ref.url) return { pass: true, detail: `Model loaded from ${ref.url}.` };
-                        if (c.paths.includes(ref.path)) return { pass: true, detail: `Found ${ref.path} in the repository.` };
-                        if (c.lowerPaths.has(ref.path.toLowerCase())) {
+                        // The browser resolves loader paths against the page (index.html), not the .js file.
+                        // Also accept the script's folder, for new URL('./x.glb', import.meta.url).
+                        const page = resolveRepoPath(m[1], c.indexPath || 'index.html');
+                        if (page.url) return { pass: true, detail: `Model loaded from ${page.url}.` };
+                        const candidates = [...new Set([page.path, resolveRepoPath(m[1], chunk.path).path])];
+                        const found = candidates.find((p) => c.paths.includes(p));
+                        if (found) return { pass: true, detail: `Found ${found} in the repository.` };
+                        if (candidates.some((p) => c.lowerPaths.has(p.toLowerCase()))) {
                             return { pass: false, detail: `Code loads "${m[1]}" but the file's capitalisation differs in the repository.` };
                         }
-                        return { pass: false, detail: `Code loads "${m[1]}" but ${ref.path} is not in the repository.` };
+                        return { pass: false, detail: `Code loads "${m[1]}" but ${page.path} is not in the repository.` };
                     }
                 }
                 return { pass: false, detail: 'No .glb or .gltf path found in your JavaScript.' };

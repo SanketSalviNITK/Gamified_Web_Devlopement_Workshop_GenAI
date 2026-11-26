@@ -1,0 +1,13 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Make avatar.glb</title>
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }</script>
+<p>Building <code>avatar.glb</code>…</p>
+<script type="module">
+    import { exportGlb } from './make-avatar.js';
+    const buf = await exportGlb();
+    window.avatarBytes = new Uint8Array(buf);
+    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(new Blob([buf])), download: 'avatar.glb', textContent: 'Download avatar.glb' });
+    document.body.append(a);
+    document.querySelector('p').textContent = `Built ${buf.byteLength} bytes.`;
+</script>
