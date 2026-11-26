@@ -61,12 +61,13 @@ export const MODULES = [
         title: 'Your 3D avatar',
         codename: 'Chassis Sync',
         summary: 'Load a .glb model into your scene, place it, scale it and bring it to life.',
-        ready: false,
+        ready: true,
         lessons: [
-            { id: 'm4.1', title: '3D model formats' },
-            { id: 'm4.2', title: 'GLTFLoader' },
-            { id: 'm4.3', title: 'Paths and assets' },
-            { id: 'm4.4', title: 'Position, scale and rotation' },
+            { id: 'm4.1', title: '3D model formats', minutes: 5 },
+            { id: 'm4.2', title: 'GLTFLoader', minutes: 6 },
+            { id: 'm4.3', title: 'Paths and assets', minutes: 6 },
+            { id: 'm4.4', title: 'Position, scale and rotation', minutes: 6 },
+            { id: 'm4.5', title: 'Bring it to life', minutes: 6 },
         ],
     },
     {

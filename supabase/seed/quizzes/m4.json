@@ -1,0 +1,243 @@
+{
+  "module": "m4",
+  "questions": [
+    {
+      "id": "m4.q1",
+      "kind": "single",
+      "lesson": "m4.1",
+      "prompt": "What is the difference between a .gltf and a .glb file?",
+      "options": [
+        "A .glb packs the JSON, binary data and textures into one file; a .gltf keeps them in separate files",
+        "A .glb is a 2D picture of the model",
+        "A .gltf can't contain animations",
+        "They are completely different formats"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: same glTF data, but .glb is one binary file: one path, one download.",
+        "Both hold real 3D data. Neither is a picture.",
+        "glTF supports animations in both forms.",
+        "They are the same format (glTF 2.0) packaged differently."
+      ],
+      "hint": "The b stands for binary."
+    },
+    {
+      "id": "m4.q2",
+      "kind": "single",
+      "lesson": "m4.1",
+      "prompt": "Which file format is designed for 3D on the web?",
+      "options": [
+        ".fbx",
+        ".obj",
+        ".glb (glTF)",
+        ".psd"
+      ],
+      "answer": 2,
+      "explanations": [
+        ".fbx is common in game and animation tools, but heavy and not built for the web.",
+        ".obj is old and simple: no animations, materials in a separate file.",
+        "Correct: glTF is often called \"the JPEG of 3D\".",
+        ".psd is a Photoshop image, not a 3D model."
+      ],
+      "hint": "Often called the JPEG of 3D."
+    },
+    {
+      "id": "m4.q3",
+      "kind": "single",
+      "lesson": "m4.2",
+      "prompt": "Where do you import GLTFLoader from?",
+      "options": [
+        "'three/addons/loaders/GLTFLoader.js'",
+        "'three' (it's part of the main file)",
+        "'gltf'",
+        "It's built into the browser"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: it's an add-on, so your import map also needs a \"three/addons/\" entry.",
+        "GLTFLoader isn't in the main three.module.js file; it's an add-on.",
+        "There's no package called 'gltf' in your import map.",
+        "Browsers don't understand glTF on their own; Three.js's loader reads it."
+      ],
+      "hint": "It's an add-on, not part of the core."
+    },
+    {
+      "id": "m4.q4",
+      "kind": "single",
+      "lesson": "m4.2",
+      "prompt": "In loader.load(path, onLoad), which object do you add to the scene?",
+      "options": [
+        "gltf",
+        "gltf.scene",
+        "gltf.animations",
+        "loader"
+      ],
+      "answer": 1,
+      "explanations": [
+        "gltf is a plain object holding the results; adding it gives \"object not an instance of THREE.Object3D\".",
+        "Correct: gltf.scene is the 3D model (a Group).",
+        "Those are animation clips, played with an AnimationMixer.",
+        "The loader downloads the file. It isn't a 3D object."
+      ],
+      "hint": "The results object has a property that is the model itself."
+    },
+    {
+      "id": "m4.q5",
+      "kind": "single",
+      "lesson": "m4.2",
+      "prompt": "Spot the bug. The console says: Cannot read properties of undefined (reading 'rotation').",
+      "code": "1  let model;\n2  loader.load('assets/avatar.glb', (gltf) => {\n3    model = gltf.scene;\n4    scene.add(model);\n5  });\n6  model.rotation.y = Math.PI;",
+      "options": [
+        "Line 6 runs before the model has finished loading",
+        "Line 3 should be model = gltf",
+        "Line 1 should be const model",
+        "The file name is wrong"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: loading happens in the background, so line 6 runs while model is still undefined. Move it inside the callback.",
+        "gltf.scene is right; gltf isn't a 3D object.",
+        "const can't be reassigned later, so line 3 would break.",
+        "A wrong path gives a 404 in onError, not this error."
+      ],
+      "hint": "Loading is asynchronous."
+    },
+    {
+      "id": "m4.q6",
+      "kind": "single",
+      "lesson": "m4.3",
+      "prompt": "Your page is index.html, your code is in js/bg.js and your model is assets/robot.glb. Which path do you pass to loader.load()?",
+      "options": [
+        "'../assets/robot.glb'",
+        "'assets/robot.glb'",
+        "'/js/assets/robot.glb'",
+        "'C:/portfolio/assets/robot.glb'"
+      ],
+      "answer": 1,
+      "explanations": [
+        "That's relative to bg.js, but the browser resolves paths against the page.",
+        "Correct: relative to index.html, which sits next to the assets folder.",
+        "The model isn't inside js/, and a leading slash breaks on GitHub Pages project sites.",
+        "That's a path on your own computer; visitors can't reach it."
+      ],
+      "hint": "Paths are relative to the page."
+    },
+    {
+      "id": "m4.q7",
+      "kind": "single",
+      "lesson": "m4.3",
+      "prompt": "The model loads on your Windows laptop but is a 404 on GitHub Pages. The file is Robot.glb and the code loads 'assets/robot.glb'. Why?",
+      "options": [
+        "GitHub Pages is case-sensitive: Robot.glb and robot.glb are different files",
+        "GitHub Pages doesn't support .glb files",
+        "The model is too big for GitHub",
+        "GitHub Pages needs a leading slash"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: Windows ignores capitals, the web doesn't. Match the name exactly.",
+        "GitHub Pages serves .glb files like any other file.",
+        "Size would make it slow, not a 404.",
+        "A leading slash would point outside your project site."
+      ],
+      "hint": "R vs r."
+    },
+    {
+      "id": "m4.q8",
+      "kind": "single",
+      "lesson": "m4.3",
+      "prompt": "You double-click index.html and the model won't load (a CORS error in the console). What's the fix?",
+      "options": [
+        "Open the page through a local server, e.g. VS Code's Live Server",
+        "Rename the model to .gltf",
+        "Add more lights",
+        "Move the model into the js folder"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: browsers block loading files from file:// pages. A local server serves them over http.",
+        "The format isn't the problem; file:// is.",
+        "Lights don't affect whether the file can be downloaded.",
+        "The folder doesn't matter; the browser blocks file:// loads anywhere."
+      ],
+      "hint": "Look at the address bar: file://…"
+    },
+    {
+      "id": "m4.q9",
+      "kind": "single",
+      "lesson": "m4.4",
+      "prompt": "Which line makes the model twice as big in every direction?",
+      "options": [
+        "model.scale.setScalar(2)",
+        "model.position.set(2, 2, 2)",
+        "model.rotation.y = 2",
+        "model.size = 2"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: the same as model.scale.set(2, 2, 2).",
+        "That moves the model; its size doesn't change.",
+        "That turns it by 2 radians (about 115°).",
+        "Three.js objects have no size property; use scale."
+      ],
+      "hint": "Scale, not position."
+    },
+    {
+      "id": "m4.q10",
+      "kind": "single",
+      "lesson": "m4.4",
+      "prompt": "You want to turn the model to face the other way (180°). Which line is correct?",
+      "options": [
+        "model.rotation.y = 180",
+        "model.rotation.y = Math.PI",
+        "model.rotation.x = Math.PI",
+        "model.position.y = Math.PI"
+      ],
+      "answer": 1,
+      "explanations": [
+        "Rotation is in radians: 180 radians is about 28.6 full turns.",
+        "Correct: π radians = 180°. (Or THREE.MathUtils.degToRad(180).)",
+        "Turning around x flips it upside down.",
+        "That moves it up by 3.14 units."
+      ],
+      "hint": "Radians, around the vertical axis."
+    },
+    {
+      "id": "m4.q11",
+      "kind": "order",
+      "lesson": "m4.5",
+      "prompt": "Put these lines in order to play the model's Wave animation.",
+      "options": [
+        "mixer.update(delta);   // inside the animation loop",
+        "const mixer = new THREE.AnimationMixer(gltf.scene);",
+        "const clip = THREE.AnimationClip.findByName(gltf.animations, 'Wave');",
+        "mixer.clipAction(clip).play();"
+      ],
+      "answer": [1, 2, 3, 0],
+      "explanations": [
+        "Create the mixer for the model, find the clip, start its action, then update the mixer every frame so the animation moves."
+      ],
+      "hint": "Each line uses something the one before it created."
+    },
+    {
+      "id": "m4.q12",
+      "kind": "single",
+      "lesson": "m4.5",
+      "prompt": "Which line in your animation loop spins the model on its Y axis, the same speed on every screen?",
+      "options": [
+        "if (model) model.rotation.y += 0.6 * delta;",
+        "model.rotation.y = 0.6;",
+        "model.position.y += 0.6 * delta;",
+        "if (model) model.scale.y += 0.6;"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: it adds a little every frame, scaled by delta time, and waits for the model to load.",
+        "That sets one fixed angle, so the model stops instead of spinning.",
+        "That moves it upward, forever.",
+        "That stretches it taller every frame."
+      ],
+      "hint": "Add to the rotation every frame, scaled by delta."
+    }
+  ]
+}

@@ -30,6 +30,11 @@ const WIDGETS = {
     lightlab: () => import('./widgets/lightlab.js'),
     looplab: () => import('./widgets/looplab.js'),
     bglab: () => import('./widgets/bglab.js'),
+    glbinspect: () => import('./widgets/glbinspect.js'),
+    loaderlab: () => import('./widgets/loaderlab.js'),
+    pathlab: () => import('./widgets/pathlab.js'),
+    transformlab: () => import('./widgets/transformlab.js'),
+    lifelab: () => import('./widgets/lifelab.js'),
 };
 const QUEST_XP = [0, 100, 300, 600, 1000, 1500];
 const LOCAL_KEY = 'course_progress_v1';

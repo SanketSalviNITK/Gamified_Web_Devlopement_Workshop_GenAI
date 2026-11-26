@@ -200,6 +200,17 @@ test('quest 4: model must exist where the code loads it from', async () => {
     assert.deepEqual(failed(await run(4, { files: edit('bg.js', (s) => s.replace('model.rotation.y += 0.01;', '')) })), ['spin']);
 });
 
+test('quest 4: model paths resolve against the page, like the browser does', async () => {
+    // Script in js/, model in assets/: the browser fetches assets/avatar.glb (relative to index.html).
+    const { 'bg.js': bg, ...rest } = GOOD;
+    const moved = { ...rest, 'js/bg.js': bg.replace("'./assets/avatar.glb'", "'assets/avatar.glb'") };
+    moved['index.html'] = moved['index.html'].replace('src="bg.js"', 'src="js/bg.js"');
+    assert.deepEqual(failed(await run(4, { files: moved })), []);
+    // A path that points outside the assets folder fails with the page-relative path in the message.
+    const r = await run(4, { files: edit('bg.js', (s) => s.replace("'./assets/avatar.glb'", "'../avatar.glb'")) });
+    assert.match(r.checks.find((c) => c.id === 'model').detail, /not in the repository/);
+});
+
 test('quest 5: chatbot requirements', async () => {
     const twoPatterns = `const input = document.querySelector('input'); const log = document.querySelector('#chat-log');
 function reply(m) { if (/hello/i.test(m)) return 'hi'; if (/bye/i.test(m)) return 'bye'; return '?'; }
