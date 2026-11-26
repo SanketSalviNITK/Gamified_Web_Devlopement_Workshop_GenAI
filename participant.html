@@ -652,6 +652,8 @@
             }
             box.innerHTML = renderResult(Number(questId), result || {});
             box.scrollTop = 0;
+            // The result sits below the form: bring the verdict into view so nobody has to scroll to find it.
+            box.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
             btn.disabled = false;
             btn.innerText = 'VERIFY AGAIN';
             if (result && result.passed) await loadMe();
