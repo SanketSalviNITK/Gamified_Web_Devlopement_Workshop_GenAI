@@ -76,12 +76,13 @@ export const MODULES = [
         title: 'A chatbot that answers',
         codename: 'Consciousness',
         summary: 'Build a chat window and give it answers with JavaScript and regular expressions.',
-        ready: false,
+        ready: true,
         lessons: [
-            { id: 'm5.1', title: 'Events and the DOM' },
-            { id: 'm5.2', title: 'Regular expressions' },
-            { id: 'm5.3', title: 'Matching intents' },
-            { id: 'm5.4', title: 'A chat window that scrolls' },
+            { id: 'm5.1', title: 'Events and the DOM', minutes: 6 },
+            { id: 'm5.2', title: 'Regular expressions', minutes: 7 },
+            { id: 'm5.3', title: 'Matching intents', minutes: 6 },
+            { id: 'm5.4', title: 'A chat window that scrolls', minutes: 5 },
+            { id: 'm5.5', title: 'Personality and polish', minutes: 6 },
         ],
     },
 ];

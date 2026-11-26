@@ -18,6 +18,7 @@ export const SEED_FILES = {
     m2: 'supabase/migrations/20261125010000_course_seed_m2.sql',
     m3: 'supabase/migrations/20261125020000_course_seed_m3.sql',
     m4: 'supabase/migrations/20261126000000_course_seed_m4.sql',
+    m5: 'supabase/migrations/20261126010000_course_seed_m5.sql',
 };
 
 const q = (s) => (s === null || s === undefined ? 'null' : `'${String(s).replace(/'/g, "''")}'`);

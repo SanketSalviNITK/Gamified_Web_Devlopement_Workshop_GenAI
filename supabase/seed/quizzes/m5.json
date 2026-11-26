@@ -1,0 +1,243 @@
+{
+  "module": "m5",
+  "questions": [
+    {
+      "id": "m5.q1",
+      "kind": "single",
+      "lesson": "m5.1",
+      "prompt": "Which line runs a function when the chat form is submitted?",
+      "options": [
+        "form.addEventListener('submit', handleSend);",
+        "form.submit = handleSend;",
+        "handleSend(form);",
+        "document.querySelector(handleSend);"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: addEventListener waits for the event and then calls your function.",
+        "form.submit is a built-in method that sends the form; overwriting it doesn't listen for anything.",
+        "That calls the function once, right away, not when the visitor sends a message.",
+        "querySelector finds elements by selector; it doesn't take a function."
+      ],
+      "hint": "Listen for an event."
+    },
+    {
+      "id": "m5.q2",
+      "kind": "single",
+      "lesson": "m5.1",
+      "prompt": "How do you read what the visitor typed into <input id=\"chat-input\">?",
+      "options": [
+        "document.querySelector('#chat-input').value",
+        "document.querySelector('#chat-input').text",
+        "document.querySelector('#chat-input').innerHTML",
+        "document.querySelector('chat-input').value"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: an input's current text is in its value property.",
+        "Inputs have no text property; use value.",
+        "An <input> has no inner HTML; what's typed lives in value.",
+        "Without the # it looks for a <chat-input> tag, not the id."
+      ],
+      "hint": "Inputs store what's typed in one property."
+    },
+    {
+      "id": "m5.q3",
+      "kind": "single",
+      "lesson": "m5.1",
+      "prompt": "Why should you show the visitor's message with textContent instead of innerHTML?",
+      "options": [
+        "innerHTML would run any HTML the visitor types, which could inject code into your page",
+        "textContent is the only way to change text",
+        "innerHTML doesn't work on <p> elements",
+        "textContent makes the text bold"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: that's cross-site scripting. textContent always shows text as plain text.",
+        "innerHTML can change text too; it's just unsafe for visitor input.",
+        "innerHTML works on almost any element.",
+        "textContent doesn't style anything."
+      ],
+      "hint": "What if someone types an <img onerror=…> tag?"
+    },
+    {
+      "id": "m5.q4",
+      "kind": "single",
+      "lesson": "m5.2",
+      "prompt": "Which visitor message does /hello|hi/i.test(message) return true for?",
+      "options": [
+        "\"HELLO there\"",
+        "\"good morning\"",
+        "\"hey\"",
+        "\"bye\""
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: the i flag ignores capitals, so HELLO matches hello.",
+        "None of the pattern's words appear in it.",
+        "\"hey\" is neither \"hello\" nor contains \"hi\".",
+        "\"bye\" contains neither."
+      ],
+      "hint": "The i flag."
+    },
+    {
+      "id": "m5.q5",
+      "kind": "single",
+      "lesson": "m5.2",
+      "prompt": "What does \\b do in /\\bhi\\b/?",
+      "options": [
+        "Marks a word boundary, so \"hi\" must be a whole word",
+        "Makes the match bold",
+        "Matches a backslash",
+        "Matches a blank space only"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: \"hi\" now matches in \"hi there\" but not inside \"this\".",
+        "Regex finds text; it doesn't style it.",
+        "A literal backslash is written \\\\.",
+        "A boundary is between a word character and a non-word character (or the start/end), not a space itself."
+      ],
+      "hint": "Think about \"this\" vs \"hi\"."
+    },
+    {
+      "id": "m5.q6",
+      "kind": "single",
+      "lesson": "m5.2",
+      "prompt": "Which pattern matches an email address like ana.rao@uni.edu?",
+      "options": [
+        "/\\w+@\\w+\\.\\w+/",
+        "/@/",
+        "/email/i",
+        "/\\d+@\\d+/"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: letters, @, letters, a real dot, letters.",
+        "A lone @ also matches \"@ana\", which isn't an email.",
+        "That matches the word \"email\", not an address.",
+        "\\d is digits only, so letters wouldn't match."
+      ],
+      "hint": "Build it from parts."
+    },
+    {
+      "id": "m5.q7",
+      "kind": "single",
+      "lesson": "m5.3",
+      "prompt": "Your bot checks intents in order: greeting /\\b(hi|hello)\\b/i first, then skills /skill/i. What does it reply to \"Hi, what are your skills?\"",
+      "options": [
+        "The greeting reply, because greeting is checked first",
+        "The skills reply",
+        "Both replies",
+        "The fallback reply"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: the first matching intent wins. Put specific intents (skills) before general ones (greeting).",
+        "Skills matches too, but it's checked after greeting has already won.",
+        "The loop returns at the first match, so there's only one reply.",
+        "Two intents match, so the fallback isn't used."
+      ],
+      "hint": "First match wins."
+    },
+    {
+      "id": "m5.q8",
+      "kind": "single",
+      "lesson": "m5.3",
+      "prompt": "What's a good fallback reply when no intent matches?",
+      "options": [
+        "\"Sorry, I didn't get that. Try asking about projects, skills or contact.\"",
+        "\"Error.\"",
+        "Nothing: leave the chat silent",
+        "Repeat the visitor's message back to them"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: it admits the miss and tells visitors what they can ask.",
+        "Unhelpful: the visitor doesn't know what to try next.",
+        "Silence makes the chat look broken.",
+        "Echoing isn't an answer and doesn't help them."
+      ],
+      "hint": "Help the visitor get unstuck."
+    },
+    {
+      "id": "m5.q9",
+      "kind": "order",
+      "lesson": "m5.3",
+      "prompt": "Put the steps in order for handling one message.",
+      "options": [
+        "Show the reply in the chat log",
+        "Read input.value",
+        "Find the first intent whose pattern matches",
+        "Prevent the form from reloading the page"
+      ],
+      "answer": [3, 1, 2, 0],
+      "explanations": [
+        "Stop the reload, read what was typed, find the matching intent (or the fallback), then show the reply."
+      ],
+      "hint": "Start with what the browser does by default."
+    },
+    {
+      "id": "m5.q10",
+      "kind": "single",
+      "lesson": "m5.4",
+      "prompt": "Which CSS keeps the chat window in the bottom-right corner while the page scrolls?",
+      "options": [
+        "#chat { position: fixed; bottom: 16px; right: 16px; }",
+        "#chat { float: right; }",
+        "#chat { position: relative; bottom: 0; }",
+        "#chat { text-align: right; }"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: fixed pins it to the window; bottom and right set the corner.",
+        "Float moves it to the right of its line, and it still scrolls away.",
+        "Relative only nudges it from its normal place in the page.",
+        "That aligns the text inside it, not the box itself."
+      ],
+      "hint": "Pinned to the window."
+    },
+    {
+      "id": "m5.q11",
+      "kind": "single",
+      "lesson": "m5.4",
+      "prompt": "Spot the bug. The newest messages end up hidden below the bottom of the chat.",
+      "code": "1  #chat-log { max-height: 220px; overflow-y: auto; }\n\n2  function addMessage(text) {\n3    const p = document.createElement('p');\n4    p.textContent = text;\n5    log.append(p);\n6  }",
+      "options": [
+        "After line 5, add log.scrollTop = log.scrollHeight;",
+        "Remove max-height from line 1",
+        "Change textContent to innerHTML on line 4",
+        "Use prepend instead of append on line 5"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: scroll the log to the bottom after adding each message.",
+        "Then the chat grows forever instead of scrolling.",
+        "That's unsafe and doesn't affect scrolling.",
+        "Newest-at-the-top works, but it breaks the usual chat order; scrolling is the expected fix."
+      ],
+      "hint": "Scroll after adding."
+    },
+    {
+      "id": "m5.q12",
+      "kind": "single",
+      "lesson": "m5.5",
+      "prompt": "const m = \"My name is Sam\".match(/my name is (\\w+)/i); What is m[1]?",
+      "options": [
+        "\"Sam\"",
+        "\"My name is Sam\"",
+        "\"my\"",
+        "true"
+      ],
+      "answer": 0,
+      "explanations": [
+        "Correct: m[1] is what the first capture group ( ) matched.",
+        "That's m[0], the whole match.",
+        "\"my\" is part of the pattern outside the group.",
+        "match returns an array (or null); test returns true/false."
+      ],
+      "hint": "Index 1 is the first ( ) group."
+    }
+  ]
+}
