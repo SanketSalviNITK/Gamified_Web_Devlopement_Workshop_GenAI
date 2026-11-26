@@ -220,6 +220,20 @@ input.onchange = () => { log.innerHTML += input.value; log.scrollTop = log.scrol
     assert.deepEqual(failed(await run(5, { files: edit('index.html', (h) => h.replace('#chat { position: fixed; bottom: 20px; right: 20px; }', '#chat { margin: 1rem; }').replace('#bg { position: fixed; inset: 0; z-index: -1; }', '')) })), ['corner']);
 });
 
+test('quest 5: an intents list with pattern properties counts as regex matching', async () => {
+    const intents = `const input = document.querySelector('#chat-input'); const log = document.querySelector('#chat-log');
+const intents = [
+  { name: 'greeting', pattern: /\\b(hi|hello|hey)\\b/i, reply: 'Hi!' },
+  { name: 'projects', pattern: /project|portfolio/i, reply: 'A weather app.' },
+  { name: 'contact', reply: 'Email me.', pattern: /contact|email/i },
+];
+function reply(m) { for (const it of intents) if (it.pattern.test(m)) return it.reply; return '?'; }
+input.onchange = () => { const p = document.createElement('p'); p.textContent = reply(input.value); log.append(p); log.scrollTop = log.scrollHeight; };`;
+    const r = await run(5, { files: { ...GOOD, 'js/chatbot.js': intents } });
+    assert.deepEqual(failed(r), []);
+    assert.match(r.checks.find((c) => c.id === 'regex').detail, /^3 regex/);
+});
+
 test('vendored libraries and node_modules are not downloaded', async () => {
     const files = { ...GOOD, 'node_modules/x/index.js': 'x', 'libs/three.min.js': 'x'.repeat(10), 'big.js': 'y' };
     const gh = fakeGitHub({ files });

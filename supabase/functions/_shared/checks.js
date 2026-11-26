@@ -242,7 +242,7 @@ export const RULES = {
                 const n = count(/\/(?:[^/\n\\]|\\.){2,}\/[gimsuy]*\s*\.test\s*\(/g, c.js)
                     + count(/\.(match|search|replace)\s*\(\s*\/(?:[^/\n\\]|\\.){2,}\//g, c.js)
                     + count(/new\s+RegExp\s*\(/g, c.js)
-                    + count(/\{\s*(pattern|regex|re|keywords?)\s*:\s*\/(?:[^/\n\\]|\\.){2,}\/[gimsuy]*/g, c.js);
+                    + count(/[{,]\s*(pattern|regex|re|keywords?|match)\s*:\s*\/(?:[^/\n\\]|\\.){2,}\/[gimsuy]*/g, c.js);
                 return { pass: n >= 3, detail: `${n} regex pattern${n === 1 ? '' : 's'} found.` };
             },
         },
