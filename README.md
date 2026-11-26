@@ -73,7 +73,7 @@ The site is plain static files, so GitHub Pages serves it as-is:
 
 ## 🛡️ Instructor Notes
 * The actual prompt instructions are stored in the `Walkthrough/` folder as `.md` files.
-* An `Instructor_Prompts/` folder contains pre-filled, test-ready prompts for live demonstrations. This folder is in `.gitignore` so students cannot access the answers via the repository!
+* Keep instructor notes in a local `Instructor_Prompts/` folder. It is listed in `.gitignore`, so it is never committed and students cannot see the answers in the repository.
 
 ---
 
